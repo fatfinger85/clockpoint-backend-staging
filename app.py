@@ -118,6 +118,25 @@ def exportar():
 def listar_proyectos():
     proyectos = supabase.table("proyectos").select("*").order("nombre").execute().data
     return jsonify(proyectos)
+
+@app.route("/agregar-proyecto", methods=["POST"])
+def agregar_proyecto():
+    if not session.get("admin"):
+        return jsonify({"status": "error", "message": "No autorizado"}), 403
+
+    data = request.get_json()
+    nombre = data.get("nombre")
+
+    if not nombre:
+        return jsonify({"status": "error", "message": "Nombre requerido"}), 400
+
+    try:
+        supabase.table("proyectos").insert({"nombre": nombre}).execute()
+        return jsonify({"status": "success", "message": "Proyecto agregado"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
