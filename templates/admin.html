@@ -83,25 +83,59 @@
         </div>`;
     }
 
-    // Carga el historial de registros
+    // Carga el historial de registros, incluyendo nombre del proyecto
     async function cargarHistorial() {
       showSpinner('tablaHistorial');
       try {
-        const res = await fetch('/registros');
-        if (!res.ok) throw new Error(res.statusText);
-        const data = await res.json();
-        let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th></tr></thead><tbody>";
-        data.forEach(r => {
-          html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td></tr>`;
+        // Obtener registros y proyectos
+        const [resReg, resProj] = await Promise.all([
+          fetch('/registros'),
+          fetch('/proyectos')
+        ]);
+        if (!resReg.ok) throw new Error('Error al obtener registros');
+        if (!resProj.ok) throw new Error('Error al obtener proyectos');
+
+        const registros = await resReg.json();
+        const proyectos = await resProj.json();
+
+        // Mapa de proyectos por id
+        const mapaProyectos = {};
+        proyectos.forEach(p => { mapaProyectos[p.id] = p.nombre; });
+
+        // Construir tabla con columna Proyecto
+        let html = `
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Acción</th>
+                <th>Proyecto</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        registros.forEach(r => {
+          const nombreProyecto = mapaProyectos[r.proyecto_id] || '—';
+          html += `
+            <tr>
+              <td>${r.nombre}</td>
+              <td>${r.accion}</td>
+              <td>${nombreProyecto}</td>
+              <td>${r.timestamp}</td>
+            </tr>
+          `;
         });
-        html += "</tbody></table>";
+        html += `</tbody></table>`;
+
         document.getElementById('tablaHistorial').innerHTML = html;
       } catch (err) {
-        document.getElementById('tablaHistorial').innerHTML = `<div class='alert alert-danger'>Error cargando historial: ${err.message}</div>`;
+        document.getElementById('tablaHistorial').innerHTML =
+          `<div class="alert alert-danger">Error cargando historial: ${err.message}</div>`;
       }
     }
 
-    // Carga la lista de empleados
+    // Resto de funciones idénticas
     async function cargarEmpleados() {
       showSpinner('tablaEmpleados');
       try {
@@ -119,7 +153,6 @@
       }
     }
 
-    // Elimina un empleado y recarga la lista
     async function eliminarEmpleado(nombre) {
       if (!confirm(`¿Eliminar a ${nombre}?`)) return;
       try {
@@ -135,7 +168,6 @@
       cargarEmpleados();
     }
 
-    // Carga la lista de proyectos
     async function cargarProyectos() {
       showSpinner('tablaProyectos');
       try {
@@ -143,9 +175,7 @@
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
         let html = "<table class='table table-bordered'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
-        data.forEach(p => {
-          html += `<tr><td>${p.nombre}</td></tr>`;
-        });
+        data.forEach(p => { html += `<tr><td>${p.nombre}</td></tr>`; });
         html += "</tbody></table>";
         document.getElementById('tablaProyectos').innerHTML = html;
       } catch (err) {
@@ -153,17 +183,12 @@
       }
     }
 
-    // Enviar nuevo proyecto
     document.getElementById('formProyecto').addEventListener('submit', async (e) => {
       e.preventDefault();
       const nombre = document.getElementById('nombreProyecto').value.trim();
       if (!nombre) return;
       try {
-        const res = await fetch('/agregar-proyecto', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre })
-        });
+        const res = await fetch('/agregar-proyecto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) });
         if (!res.ok) throw new Error(res.statusText);
         e.target.reset();
         cargarProyectos();
@@ -172,13 +197,11 @@
       }
     });
 
-    // Sólo cargar datos cuando el usuario cambia de pestaña
     document.querySelector('#historial-tab').addEventListener('shown.bs.tab', cargarHistorial);
     document.querySelector('#empleados-tab').addEventListener('shown.bs.tab', cargarEmpleados);
     document.querySelector('#gestion-tab').addEventListener('shown.bs.tab', cargarEmpleados);
     document.querySelector('#proyectos-tab').addEventListener('shown.bs.tab', cargarProyectos);
 
-    // Carga inicial de la pestaña activa
     cargarHistorial();
   </script>
 </body>
