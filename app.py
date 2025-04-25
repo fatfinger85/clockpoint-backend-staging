@@ -163,14 +163,30 @@ def estado():
 def exportar():
     if not session.get("admin"):
         return redirect("/login")
+
     try:
-        data = supabase.table("registros").select("*").order("timestamp", desc=True).execute().data
-    except Exception:
+        # 1) Traer todos los registros
+        registros = supabase.table("registros")\
+            .select("*")\
+            .order("timestamp", desc=True)\
+            .execute().data
+
+        # 2) Traer todos los proyectos y construir un mapa id→nombre
+        proyectos = supabase.table("proyectos")\
+            .select("id,nombre")\
+            .execute().data
+        mapa_proyectos = { p["id"]: p["nombre"] for p in proyectos }
+
+    except Exception as e:
         logging.error("Error generando CSV", exc_info=True)
         return "Error interno", 500
-    csv = "nombre,accion,proyecto_id,timestamp\n"
-    for row in data:
-        csv += f"{row['nombre']},{row['accion']},{row.get('proyecto_id','')},{row['timestamp']}\n"
+
+    # 3) Cabecera: cambiamos proyecto_id por proyecto
+    csv = "nombre,accion,proyecto,fecha\n"
+    for r in registros:
+        proyecto_nombre = mapa_proyectos.get(r.get("proyecto_id"), "")
+        csv += f'{r["nombre"]},{r["accion"]},"{proyecto_nombre}",{r["timestamp"]}\n'
+
     return csv, 200, {
         "Content-Type": "text/csv",
         "Content-Disposition": "attachment;filename=registros.csv"
