@@ -44,10 +44,12 @@ def submit():
     if not empleados:
         return jsonify({"status": "error"}), 401
 
+    proyecto_id = data.get("proyecto_id")
     supabase.table("registros").insert({
         "nombre": nombre,
         "accion": accion,
-        "timestamp": timestamp
+        "timestamp": timestamp,
+        "proyecto_id": proyecto_id
     }).execute()
     return jsonify({"status": "success"})
 
@@ -112,7 +114,10 @@ def exportar():
         "Content-Type": "text/csv",
         "Content-Disposition": "attachment;filename=registros.csv"
     }
-
+@app.route("/proyectos")
+def listar_proyectos():
+    proyectos = supabase.table("proyectos").select("*").order("nombre").execute().data
+    return jsonify(proyectos)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
