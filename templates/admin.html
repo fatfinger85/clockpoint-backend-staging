@@ -3,125 +3,126 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ClockPoint - Admin</title>
+  <title>ClockPoint - Panel Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background: #f8f9fa; }
-    .card { border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .nav-link.active { background: #0d6efd; color: white; }
-    th { background: #e9ecef; }
+    body {
+      background-color: #f8f9fa;
+    }
+    .nav-tabs .nav-link.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+    .nav-tabs .nav-link {
+      color: #0d6efd;
+    }
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+    }
+    .table {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #e9ecef;
+    }
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 576px) {
+      .card {
+        padding: 20px; /* Reduced padding on small screens */
+      }
+      .nav-tabs .nav-link {
+        font-size: 0.9rem; /* Smaller font on small screens */
+        padding: 0.5rem;
+      }
+      .table-responsive {
+        overflow-x: auto;  /* Enable horizontal scrolling for tables on small screens */
+      }
+    }
   </style>
 </head>
 <body>
-<div class="container py-4">
-  <div class="card p-4">
-    <h2 class="text-center text-primary">Panel de Administración</h2>
-    <ul class="nav nav-tabs mt-4" id="tabs" role="tablist">
-      <li class="nav-item"><button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial">Historial</button></li>
-      <li class="nav-item"><button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados">Empleados</button></li>
-      <li class="nav-item"><button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos">Proyectos</button></li>
-      <li class="nav-item"><a class="nav-link text-success" href="/exportar" target="_blank">Exportar CSV</a></li>
-    </ul>
-    <div class="tab-content mt-4">
-      <div class="tab-pane fade show active" id="historial">
-        <div id="tablaHistorial">Cargando historial...</div>
-      </div>
-      <div class="tab-pane fade" id="empleados">
-        <form id="formEmpleado" class="row g-2">
-          <div class="col-md-5"><input id="nuevoNombre" type="text" placeholder="Nombre" class="form-control" required></div>
-          <div class="col-md-5"><input id="nuevoPin" type="text" placeholder="PIN" class="form-control" required></div>
-          <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Agregar</button></div>
-        </form>
-        <div id="tablaEmpleados" class="mt-4">Cargando empleados...</div>
-      </div>
-      <div class="tab-pane fade" id="proyectos">
-        <form id="formProyecto" class="row g-2">
-          <div class="col-md-10"><input id="nombreProyecto" type="text" placeholder="Nombre del Proyecto" class="form-control" required></div>
-          <div class="col-md-2"><button class="btn btn-success w-100" type="submit">Agregar</button></div>
-        </form>
-        <div id="tablaProyectos" class="mt-4">Cargando proyectos...</div>
+  <div class="container py-5">
+    <div class="card p-4">
+      <h2 class="text-center mb-4 text-primary">Panel de Administración</h2>
+
+      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab">🕓 Historial</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">➕ Agregar Empleado</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">👥 Gestionar Empleados</button>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
+        </li>
+      </ul>
+
+      <div class="tab-content mt-4" id="adminTabsContent">
+        <div class="tab-pane fade show active" id="historial" role="tabpanel">
+          <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
+        </div>
+        <div class="tab-pane fade" id="empleados" role="tabpanel">
+          <form action="/agregar-empleado" method="POST" class="mt-3 row g-2">
+            <div class="col-md-5">
+              <input type="text" name="nombre" placeholder="Nombre" required class="form-control">
+            </div>
+            <div class="col-md-5">
+              <input type="text" name="pin" placeholder="PIN" required class="form-control">
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100">Agregar</button>
+            </div>
+          </form>
+        </div>
+        <div class="tab-pane fade" id="gestion" role="tabpanel">
+          <div class="table-responsive" id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-const backend = "https://clockpoint-backend-staging.onrender.com"; // Cambiar a tu backend real
+  <script>
+    async function cargarHistorial() {
+      const res = await fetch('/registros');
+      const data = await res.json();
+      let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th></tr></thead><tbody>";
+      data.forEach(r => {
+        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td></tr>`;
+      });
+      html += "</tbody></table>";
+      document.getElementById("tablaHistorial").innerHTML = html;
+    }
 
-async function cargarHistorial() {
-  const res = await fetch(`${backend}/registros`);
-  const data = await res.json();
-  let html = `<table class='table table-bordered'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th></tr></thead><tbody>`;
-  data.forEach(r => {
-    html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp.replace('T', ' ').substring(0, 19)}</td></tr>`;
-  });
-  html += `</tbody></table>`;
-  document.getElementById("tablaHistorial").innerHTML = html;
-}
+    async function cargarEmpleados() {
+      const res = await fetch('/empleados');
+      const data = await res.json();
+      let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead><tbody>";
+      data.forEach(e => {
+        html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td></tr>`;
+      });
+      html += "</tbody></table>";
+      document.getElementById("tablaEmpleados").innerHTML = html;
+    }
 
-async function cargarEmpleados() {
-  const res = await fetch(`${backend}/empleados`);
-  const data = await res.json();
-  let html = `<table class='table table-bordered'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead><tbody>`;
-  data.forEach(e => {
-    html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-danger btn-sm' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td></tr>`;
-  });
-  html += `</tbody></table>`;
-  document.getElementById("tablaEmpleados").innerHTML = html;
-}
+    async function eliminarEmpleado(nombre) {
+      if (!confirm(`¿Eliminar a ${nombre}?`)) return;
+      await fetch('/eliminar-empleado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre })
+      });
+      cargarEmpleados();
+    }
 
-async function cargarProyectos() {
-  const res = await fetch(`${backend}/proyectos`);
-  const data = await res.json();
-  let html = `<table class='table table-bordered'><thead><tr><th>Proyecto</th></tr></thead><tbody>`;
-  data.forEach(p => {
-    html += `<tr><td>${p.nombre}</td></tr>`;
-  });
-  html += `</tbody></table>`;
-  document.getElementById("tablaProyectos").innerHTML = html;
-}
-
-async function eliminarEmpleado(nombre) {
-  if (!confirm("¿Eliminar a " + nombre + "?")) return;
-  await fetch(`${backend}/eliminar-empleado`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre })
-  });
-  cargarEmpleados();
-}
-
-document.getElementById("formEmpleado").addEventListener("submit", async e => {
-  e.preventDefault();
-  const nombre = document.getElementById("nuevoNombre").value.trim();
-  const pin = document.getElementById("nuevoPin").value.trim();
-  await fetch(`${backend}/agregar-empleado`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre, pin })
-  });
-  document.getElementById("formEmpleado").reset();
-  cargarEmpleados();
-});
-
-document.getElementById("formProyecto").addEventListener("submit", async e => {
-  e.preventDefault();
-  const nombre = document.getElementById("nombreProyecto").value.trim();
-  await fetch(`${backend}/agregar-proyecto`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre })
-  });
-  document.getElementById("formProyecto").reset();
-  cargarProyectos();
-});
-
-cargarHistorial();
-cargarEmpleados();
-cargarProyectos();
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    cargarHistorial();
+    cargarEmpleados();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
