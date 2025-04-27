@@ -238,19 +238,28 @@ def exportar():
         if not data:
             return "No hay registros para exportar.", 200
 
-        # Using StringIO for potentially large data might be better
-        csv = "nombre,accion,timestamp\n"
+        csv_lines = ["nombre,accion,timestamp"] # Start with header row
         for row in data:
-            # Basic CSV escaping (consider a dedicated CSV library for complex cases)
-            nombre_csv = f'"{row["nombre"].replace("\"", "\"\"")}"'
-            accion_csv = f'"{row["accion"].replace("\"", "\"\"")}"'
-            timestamp_csv = f'"{row["timestamp"].replace("\"", "\"\"")}"'
-            csv += f"{nombre_csv},{accion_csv},{timestamp_csv}\n"
+            # Prepare data, handling potential None values and escaping quotes
+            nombre = row.get('nombre', '') or '' # Ensure string, handle None
+            accion = row.get('accion', '') or '' # Ensure string, handle None
+            timestamp = row.get('timestamp', '') or '' # Ensure string, handle None
+
+            # Escape double quotes for CSV compatibility
+            nombre_escaped = nombre.replace('"', '""')
+            accion_escaped = accion.replace('"', '""')
+            timestamp_escaped = timestamp.replace('"', '""')
+
+            # Create the CSV line using f-string with the prepared variables
+            csv_lines.append(f'"{nombre_escaped}","{accion_escaped}","{timestamp_escaped}"')
+
+        # Join all lines with a newline character
+        csv_output = "\n".join(csv_lines) + "\n" # Add final newline
 
         logging.info("Generated CSV export.")
-        return csv, 200, {
-            "Content-Type": "text/csv",
-            "Content-Disposition": f"attachment;filename=registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv" # Add timestamp to filename
+        return csv_output, 200, {
+            "Content-Type": "text/csv; charset=utf-8", # Specify charset
+            "Content-Disposition": f"attachment;filename=registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         }
     except Exception as e:
         logging.error(f"Error exporting records: {str(e)}")
