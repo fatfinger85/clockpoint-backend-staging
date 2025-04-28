@@ -209,7 +209,7 @@
             .replace(/'/g, "&#039;");
     }
 
-    // --- Alert Helper ---
+    // --- Alert Helper Functions ---
     function showAdminAlert(message, type = 'danger') {
       const wrapper = document.createElement('div');
       wrapper.innerHTML = [
@@ -226,8 +226,9 @@
     }
 
     // --- Data Loading Functions ---
+    // (cargarHistorial, cargarEmpleados, cargarProyectos remain the same - keep your existing code for these)
     async function cargarHistorial() {
-      tablaHistorial.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
+      tablaHistorial.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
           const res = await fetch('/registros');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
@@ -237,12 +238,12 @@
           if (data.length === 0) {
               tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>'; return;
           }
-          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>"; // Added align-middle
+          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>";
           data.forEach(r => {
             const nombre = r.nombre || '';
             const accion = r.accion || '';
             const timestamp = r.timestamp || '';
-            const proyecto = r.proyecto || '-'; // Show '-' if no project
+            const proyecto = r.proyecto || '-';
             html += `<tr>
                         <td>${escapeHtml(nombre)}</td>
                         <td>${escapeHtml(accion)}</td>
@@ -254,12 +255,12 @@
           tablaHistorial.innerHTML = html;
       } catch (error) {
           console.error("Error loading history:", error);
-          tablaHistorial.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
+          tablaHistorial.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
       }
     }
 
     async function cargarEmpleados() {
-      tablaEmpleados.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
+      tablaEmpleados.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
           const res = await fetch('/empleados');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
@@ -277,18 +278,18 @@
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
                       <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')"><i class="bi bi-trash3"></i> Eliminar</button></td>
-                    </tr>`; // Added icon to button
+                    </tr>`;
           });
           html += "</tbody></table>";
           tablaEmpleados.innerHTML = html;
       } catch (error) {
           console.error("Error loading employees:", error);
-          tablaEmpleados.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar los empleados: ${escapeHtml(error.message)}</div>`;
+          tablaEmpleados.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los empleados: ${escapeHtml(error.message)}</div>`;
       }
     }
 
     async function cargarProyectos() {
-      tablaProyectos.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
+      tablaProyectos.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
           const res = await fetch('/proyectos');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
@@ -305,70 +306,93 @@
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')"><i class="bi bi-trash3"></i> Eliminar</button></td>
-                    </tr>`; // Added icon to button
+                    </tr>`;
           });
           html += "</tbody></table>";
           tablaProyectos.innerHTML = html;
       } catch (error) {
           console.error("Error loading projects:", error);
-          tablaProyectos.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar los proyectos: ${escapeHtml(error.message)}</div>`;
+          tablaProyectos.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los proyectos: ${escapeHtml(error.message)}</div>`;
       }
     }
 
+
     // --- Unified Delete Logic ---
+
     function confirmDeleteItem(buttonElement, itemType) {
+        console.log(`confirmDeleteItem called for type: ${itemType}`); // DEBUG
         const itemName = buttonElement.getAttribute('data-name');
         if (!itemName) {
             console.error("Could not determine item name for deletion.");
+            showAdminAlert("Error: No se pudo identificar el item a eliminar.", "danger");
             return;
         }
+        console.log(`Item name to delete: ${itemName}`); // DEBUG
+
         itemNameToDeleteSpan.textContent = itemName;
+
         if (itemType === 'employee') {
             deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
+            console.log("Set deleteAction for employee."); // DEBUG
         } else if (itemType === 'project') {
             deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
+            console.log("Set deleteAction for project."); // DEBUG
         } else {
             console.error("Unknown item type for deletion:", itemType);
+            showAdminAlert(`Error: Tipo de item desconocido '${itemType}'.`, "danger");
             return;
         }
+
         if (deleteConfirmModal) {
+            console.log("Showing delete confirmation modal."); // DEBUG
             deleteConfirmModal.show();
         } else {
              console.error("Delete confirmation modal not initialized.");
+             showAdminAlert("Error: Modal de confirmación no inicializado.", "danger");
         }
     }
 
     async function performDelete(endpoint, name, refreshFunction) {
-        if (!name || !endpoint || !refreshFunction) return;
+        console.log(`performDelete called: endpoint=${endpoint}, name=${name}`); // DEBUG
+        if (!name || !endpoint || !refreshFunction) {
+             console.error("performDelete missing required arguments."); // DEBUG
+             return;
+        }
+
         clearAdminAlert();
-        // Optional: Add loading state to modal button
         const deleteBtn = document.getElementById('confirmDeleteBtn');
         if(deleteBtn) deleteBtn.disabled = true;
 
         try {
+            console.log(`Sending POST request to ${endpoint} for ${name}`); // DEBUG
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nombre: name })
             });
+            console.log(`Response status from ${endpoint}: ${response.status}`); // DEBUG
             const result = await response.json();
+            console.log(`Response body from ${endpoint}:`, result); // DEBUG
+
             if (response.ok && result.status === 'success') {
                 showAdminAlert(`${name} eliminado correctamente.`, 'success');
                 refreshFunction();
             } else {
-                throw new Error(result.message || 'Error desconocido al eliminar');
+                throw new Error(result.message || `Error ${response.status} al eliminar`);
             }
         } catch (error) {
             console.error(`Error deleting ${name} from ${endpoint}:`, error);
             showAdminAlert(`Error al eliminar ${name}: ${escapeHtml(error.message)}`, 'danger');
         } finally {
+             console.log("Hiding modal and resetting deleteAction."); // DEBUG
              if (deleteConfirmModal) deleteConfirmModal.hide();
-             if(deleteBtn) deleteBtn.disabled = false; // Re-enable button
-            deleteAction = null;
+             if(deleteBtn) deleteBtn.disabled = false;
+             deleteAction = null;
         }
     }
 
     // --- Unified Form Submission Handling ---
+    // (handleFormSubmit remains the same - keep your existing code)
     async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
         event.preventDefault();
         clearAdminAlert();
@@ -377,17 +401,24 @@
         let isValid = true;
         let formType = form.id === 'add-employee-form' ? 'employee' : (form.id === 'add-project-form' ? 'project' : '');
 
+        form.classList.remove('was-validated');
         for (let [key, value] of formData.entries()) {
-           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !value.trim()) ||
-               (formType === 'project' && key === 'nombre_proyecto' && !value.trim())) {
+           let trimmedValue = typeof value === 'string' ? value.trim() : value;
+           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !trimmedValue) ||
+               (formType === 'project' && key === 'nombre_proyecto' && !trimmedValue)) {
                  isValid = false; break;
             }
-           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(value.trim())) {
-                showAdminAlert('PIN debe ser numérico.', 'warning'); return;
+           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(trimmedValue)) {
+                showAdminAlert('PIN debe ser numérico.', 'warning');
+                form.classList.add('was-validated');
+                return;
            }
         }
-        if (!isValid) {
-             showAdminAlert('Por favor, completa todos los campos requeridos.', 'warning'); return;
+        form.classList.add('was-validated');
+        if (!form.checkValidity() || !isValid) {
+             event.stopPropagation();
+             showAdminAlert('Por favor, corrige los errores en el formulario.', 'warning');
+             return;
         }
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
@@ -401,13 +432,14 @@
                 if (errorParam) throw new Error(errorParam);
                 showAdminAlert(successParam || successMessage, 'success');
                 form.reset();
+                form.classList.remove('was-validated');
                 refreshFunction();
                 if (redirectedUrl.hash) handleUrlHash(redirectedUrl.hash);
             } else if (!response.ok) {
                  const errorText = await response.text();
                  throw new Error(errorText || `Error ${response.status}`);
-            } else { // Non-redirect OK (less likely)
-                 showAdminAlert(successMessage, 'success'); form.reset(); refreshFunction();
+            } else {
+                 showAdminAlert(successMessage, 'success'); form.reset(); form.classList.remove('was-validated'); refreshFunction();
             }
         } catch (error) {
              console.error("Error submitting form:", error);
@@ -417,8 +449,10 @@
         }
     }
 
+
     // --- URL Hash Handling ---
-    function handleUrlHash(hashValue = window.location.hash) {
+    // (handleUrlHash remains the same - keep your existing code)
+     function handleUrlHash(hashValue = window.location.hash) {
         const hash = hashValue;
         if (hash) {
             const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
@@ -433,25 +467,55 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
+        console.log("Admin Panel DOM Loaded. Initializing..."); // DEBUG
+        // Initialize Modal
         try {
             const modalElement = document.getElementById('deleteConfirmModal');
-            if (modalElement) deleteConfirmModal = new bootstrap.Modal(modalElement);
-            else console.error("Delete confirmation modal element not found.");
-        } catch(e) { console.error("Failed to initialize Bootstrap modal:", e); }
+            if (modalElement) {
+                deleteConfirmModal = new bootstrap.Modal(modalElement);
+                console.log("Delete confirmation modal initialized."); // DEBUG
+            } else {
+                 console.error("Delete confirmation modal element not found.");
+            }
+        } catch(e) {
+             console.error("Failed to initialize Bootstrap modal:", e);
+        }
 
+        // Attach listener to Modal Confirm Button
         if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', () => { if (typeof deleteAction === 'function') deleteAction(); });
-        } else { console.error("Confirm delete button not found."); }
+            confirmDeleteBtn.addEventListener('click', () => {
+                console.log("Modal confirm delete button clicked."); // DEBUG
+                if (typeof deleteAction === 'function') {
+                    console.log("Executing stored deleteAction."); // DEBUG
+                    deleteAction();
+                } else {
+                     console.error("No delete action specified for modal confirmation.");
+                }
+            });
+            console.log("Event listener attached to modal confirm button."); // DEBUG
+        } else {
+             console.error("Confirm delete button ('confirmDeleteBtn') not found in DOM.");
+        }
 
+        // Attach Form Handlers
         const addEmployeeForm = document.getElementById('add-employee-form');
         const addProjectForm = document.getElementById('add-project-form');
-        if (addEmployeeForm) addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-        if (addProjectForm) addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
+        if (addEmployeeForm) {
+            addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
+            console.log("Submit listener attached to add employee form."); // DEBUG
+        }
+        if (addProjectForm) {
+            addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
+             console.log("Submit listener attached to add project form."); // DEBUG
+        }
 
+        // Initial Data Loads
+        console.log("Initiating initial data loads..."); // DEBUG
         cargarHistorial();
         cargarEmpleados();
         cargarProyectos();
 
+        // Handle URL Params/Hash
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
@@ -463,10 +527,11 @@
              showAdminAlert(errorMsg, 'danger');
              window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         }
-
+        console.log("Handling initial URL hash if present..."); // DEBUG
         handleUrlHash();
         window.addEventListener('hashchange', () => handleUrlHash(), false);
         if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
+        console.log("Initialization complete."); // DEBUG
     });
 
   </script>
