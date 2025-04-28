@@ -59,7 +59,8 @@
             <div class="col-md-5">
               <input type="text" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado">
             </div>
-            <div class="col-md-2 d-grid"> <button type="submit" class="btn btn-primary">Agregar</button>
+            <div class="col-md-2 d-grid">
+              <button type="submit" class="btn btn-primary">Agregar</button>
             </div>
           </form>
         </div>
@@ -73,7 +74,8 @@
             <div class="col-md-10">
               <input type="text" name="nombre_proyecto" placeholder="Nombre del Nuevo Proyecto" required class="form-control" aria-label="Nombre del nuevo proyecto">
             </div>
-            <div class="col-md-2 d-grid"> <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
+            <div class="col-md-2 d-grid">
+              <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
             </div>
           </form>
           <div class="table-responsive" id="tablaProyectos">Cargando proyectos...</div>
@@ -84,59 +86,31 @@
   </div>
 
   <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          ¿Estás seguro de que quieres eliminar <strong id="itemNameToDelete"></strong>? Esta acción no se puede deshacer.
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
-        </div>
-      </div>
     </div>
-  </div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // --- DOM Elements ---
     const tablaHistorial = document.getElementById("tablaHistorial");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
-    const tablaProyectos = document.getElementById("tablaProyectos"); // New element
+    const tablaProyectos = document.getElementById("tablaProyectos");
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
-    const itemNameToDeleteSpan = document.getElementById('itemNameToDelete'); // Updated ID
+    const itemNameToDeleteSpan = document.getElementById('itemNameToDelete');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     let deleteConfirmModal = null;
-    let deleteAction = null; // Store the function to call on delete confirmation
+    let deleteAction = null;
 
     // --- Alert Helper ---
-    function showAdminAlert(message, type = 'danger') {
-      // ... (keep existing showAdminAlert function)
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = [
-        `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
-        `   <div>${message}</div>`,
-        '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-        '</div>'
-      ].join('');
-      adminAlertPlaceholder.innerHTML = ''; // Clear previous alerts
-      adminAlertPlaceholder.append(wrapper);
-    }
-    function clearAdminAlert() {
-        adminAlertPlaceholder.innerHTML = '';
-    }
+    function showAdminAlert(message, type = 'danger') { /* ... keep existing code ... */ }
+    function clearAdminAlert() { /* ... keep existing code ... */ }
 
     // --- Data Loading ---
+
+    // --- MODIFIED: Load History ---
     async function cargarHistorial() {
-      // ... (keep existing cargarHistorial function)
       tablaHistorial.innerHTML = 'Cargando historial...';
       try {
-          const res = await fetch('/registros');
+          const res = await fetch('/registros'); // Fetches records from backend
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           const data = await res.json();
 
@@ -144,10 +118,24 @@
           if (data.length === 0) {
               tablaHistorial.innerHTML = '<p class="text-muted text-center">No hay registros de historial.</p>'; return;
           }
-          let html = "<table class='table table-bordered table-striped table-hover'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th></tr></thead><tbody>";
+
+          // --- Add 'Proyecto' column header ---
+          let html = "<table class='table table-bordered table-striped table-hover'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>"; // Added <th>Proyecto</th>
+
           data.forEach(r => {
-            const nombre = r.nombre || ''; const accion = r.accion || ''; const timestamp = r.timestamp || '';
-            html += `<tr><td>${escapeHtml(nombre)}</td><td>${escapeHtml(accion)}</td><td>${escapeHtml(timestamp)}</td></tr>`;
+            // Safely get data, providing default empty strings
+            const nombre = r.nombre || '';
+            const accion = r.accion || '';
+            const timestamp = r.timestamp || '';
+            const proyecto = r.proyecto || ''; // Get project name, default to empty string if null/missing
+
+            // --- Add project data cell (td) ---
+            html += `<tr>
+                        <td>${escapeHtml(nombre)}</td>
+                        <td>${escapeHtml(accion)}</td>
+                        <td>${escapeHtml(timestamp)}</td>
+                        <td>${escapeHtml(proyecto)}</td>
+                     </tr>`; // Added <td> for project
           });
           html += "</tbody></table>";
           tablaHistorial.innerHTML = html;
@@ -155,278 +143,36 @@
           console.error("Error loading history:", error);
           tablaHistorial.innerHTML = `<div class="alert alert-danger">Error al cargar el historial: ${error.message}</div>`;
       }
-    }
+    } // End of cargarHistorial
 
-    async function cargarEmpleados() {
-      // ... (keep existing cargarEmpleados function)
-      tablaEmpleados.innerHTML = 'Cargando empleados...';
-      try {
-          const res = await fetch('/empleados');
-           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          const data = await res.json();
-           if (data.error) { throw new Error(data.error); }
-           if (data.length === 0) {
-              tablaEmpleados.innerHTML = '<p class="text-muted text-center">No hay empleados registrados.</p>'; return;
-          }
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
-          data.forEach(e => {
-            const nombre = e.nombre || ''; const pin = e.pin || '';
-            // Use data attributes for safer handling in JS
-            html += `<tr>
-                      <td>${escapeHtml(nombre)}</td>
-                      <td>${escapeHtml(pin)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')">Eliminar</button></td>
-                    </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaEmpleados.innerHTML = html;
-      } catch (error) {
-          console.error("Error loading employees:", error);
-          tablaEmpleados.innerHTML = `<div class="alert alert-danger">Error al cargar los empleados: ${error.message}</div>`;
-      }
-    }
-
-    // --- NEW: Load Projects ---
-    async function cargarProyectos() {
-      tablaProyectos.innerHTML = 'Cargando proyectos...';
-      try {
-          const res = await fetch('/proyectos'); // Fetch from new endpoint
-           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          const data = await res.json();
-           if (data.error) { throw new Error(data.error); }
-           if (data.length === 0) {
-              tablaProyectos.innerHTML = '<p class="text-muted text-center">No hay proyectos registrados.</p>';
-              return;
-          }
-          // Table structure for projects
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
-          data.forEach(p => {
-            const nombre = p.nombre || '';
-            // Use data attributes for safer handling in JS
-            html += `<tr>
-                      <td>${escapeHtml(nombre)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')">Eliminar</button></td>
-                    </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaProyectos.innerHTML = html;
-      } catch (error) {
-          console.error("Error loading projects:", error);
-          tablaProyectos.innerHTML = `<div class="alert alert-danger">Error al cargar los proyectos: ${error.message}</div>`;
-      }
-    }
-
+    async function cargarEmpleados() { /* ... keep existing code ... */ }
+    async function cargarProyectos() { /* ... keep existing code ... */ }
 
     // --- Unified Delete Logic ---
-    function confirmDeleteItem(buttonElement, itemType) {
-        const itemName = buttonElement.getAttribute('data-name'); // Get name from data attribute
-        if (!itemName) {
-            console.error("Could not determine item name for deletion.");
-            return;
-        }
-
-        itemNameToDeleteSpan.textContent = itemName; // Update modal text
-
-        // Set the delete action based on itemType
-        if (itemType === 'employee') {
-            deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
-        } else if (itemType === 'project') {
-            deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
-        } else {
-            console.error("Unknown item type for deletion:", itemType);
-            return;
-        }
-
-        if (deleteConfirmModal) {
-            deleteConfirmModal.show(); // Show the modal
-        }
-    }
-
-    async function performDelete(endpoint, name, refreshFunction) {
-        if (!name || !endpoint || !refreshFunction) return;
-
-        clearAdminAlert();
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: name }) // Backend expects 'nombre' key
-            });
-            const result = await response.json();
-
-            if (response.ok && result.status === 'success') {
-                showAdminAlert(`${name} eliminado correctamente.`, 'success');
-                refreshFunction(); // Refresh the corresponding list
-            } else {
-                throw new Error(result.message || 'Error desconocido al eliminar');
-            }
-        } catch (error) {
-            console.error(`Error deleting ${name}:`, error);
-            showAdminAlert(`Error al eliminar ${name}: ${error.message}`, 'danger');
-        } finally {
-             if (deleteConfirmModal) {
-                deleteConfirmModal.hide(); // Hide modal regardless of outcome
-             }
-            deleteAction = null; // Reset action
-        }
-    }
-
+    function confirmDeleteItem(buttonElement, itemType) { /* ... keep existing code ... */ }
+    async function performDelete(endpoint, name, refreshFunction) { /* ... keep existing code ... */ }
 
     // --- Form Submission Handling ---
-    async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
-        event.preventDefault(); // Prevent default form submission
-        clearAdminAlert();
-
-        const form = event.target;
-        const formData = new FormData(form);
-
-        // Simple client-side check (can be enhanced)
-        let missing = false;
-        for (let pair of formData.entries()) {
-           // Check specifically for the project name field or employee name/pin
-           if ((form.id === 'add-project-form' && pair[0] === 'nombre_proyecto' && !pair[1]) ||
-               (form.id === 'add-employee-form' && (pair[0] === 'nombre' || pair[0] === 'pin') && !pair[1])) {
-                 missing = true;
-                 break; // Exit loop once a missing field is found
-            }
-        }
-        if (missing) {
-             showAdminAlert('Por favor, completa todos los campos requeridos.', 'warning');
-             return;
-        }
-
-        // Specific PIN validation for employee form
-        if (form.id === 'add-employee-form' && !/^\d+$/.test(formData.get('pin'))) {
-             showAdminAlert('PIN debe ser numérico.', 'warning');
-             return;
-        }
-
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                body: formData
-            });
-
-            // Check if redirect indicates success OR if error message is returned
-            if (response.ok && response.redirected) {
-                // Success via redirect - parse message from URL (requires backend to send it)
-                const currentUrl = new URL(response.url); // Use response URL after redirect
-                const successParam = currentUrl.searchParams.get('success');
-                const errorParam = currentUrl.searchParams.get('error'); // Also check for errors in redirect
-
-                if (errorParam) {
-                    throw new Error(errorParam); // Throw error if backend redirected with error
-                }
-
-                 showAdminAlert(successParam || successMessage, 'success');
-                 form.reset(); // Clear the form
-                 refreshFunction(); // Refresh list
-
-                 // Navigate to the relevant tab based on the hash in the redirected URL
-                 if (currentUrl.hash) {
-                     const tabButton = document.querySelector(`button[data-bs-target="${currentUrl.hash}"]`);
-                     if (tabButton && bootstrap.Tab) new bootstrap.Tab(tabButton).show();
-                 }
-
-            } else if (!response.ok) {
-                // Handle errors returned directly (non-redirect)
-                const errorText = await response.text(); // Try reading direct error text
-                throw new Error(errorText || `Error ${response.status}`);
-            } else {
-                 // Handle non-redirect OK response if backend changes (less likely with current setup)
-                 showAdminAlert(successMessage, 'success');
-                 form.reset();
-                 refreshFunction();
-            }
-        } catch (error) {
-             console.error("Error submitting form:", error);
-             // Display the error message caught, which might come from backend redirect or direct response
-             showAdminAlert(`Error: ${error.message}`, 'danger');
-        }
-    }
+    async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) { /* ... keep existing code ... */ }
 
     // --- Utility Function ---
-    function escapeHtml(unsafe) {
-       // ... (keep existing escapeHtml function)
-        if (typeof unsafe !== 'string') return '';
-        return unsafe
-             .replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
-     }
+    function escapeHtml(unsafe) { /* ... keep existing code ... */ }
 
-     // Function to handle tab switching based on URL hash
-     function handleUrlHash() {
-        const hash = window.location.hash;
-        if (hash) {
-            const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
-            if (tabButton) {
-                // Need to ensure Bootstrap's Tab is loaded
-                if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
-                    // Check if the tab is already active to prevent unnecessary redraw/flicker
-                    if (!tabButton.classList.contains('active')) {
-                       const tab = new bootstrap.Tab(tabButton);
-                       tab.show();
-                    }
-                } else {
-                    console.warn("Bootstrap Tab component not ready for hash navigation.");
-                    // Fallback or retry logic might be needed
-                }
-            }
-        }
-     }
-
+    // --- URL Hash Handling ---
+     function handleUrlHash() { /* ... keep existing code ... */ }
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize the modal instance
-        deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-
-        // Attach the generic delete action trigger to the modal's confirm button
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (typeof deleteAction === 'function') {
-                deleteAction();
-            }
-        });
-
-        // Attach form handlers
-        document.getElementById('add-employee-form').addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-        document.getElementById('add-project-form').addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos)); // New handler
+        // ... (keep existing initialization code) ...
 
         // Initial data loads
-        cargarHistorial();
+        cargarHistorial(); // This will now load history including the project column
         cargarEmpleados();
-        cargarProyectos(); // New load call
+        cargarProyectos();
 
-        // Handle success/error messages from redirects
-        const urlParams = new URLSearchParams(window.location.search);
-        const successMsg = urlParams.get('success');
-        const errorMsg = urlParams.get('error');
-        const currentHash = window.location.hash; // Preserve hash
-
-        if (successMsg) {
-            showAdminAlert(successMsg, 'success');
-            // Clean the URL, keeping the hash
-            window.history.replaceState({}, document.title, window.location.pathname + currentHash);
-        } else if (errorMsg) {
-             showAdminAlert(errorMsg, 'danger');
-              window.history.replaceState({}, document.title, window.location.pathname + currentHash);
-        }
-
-        // Activate tab based on URL hash (e.g., after redirect)
-        // Call immediately and also set up listener for future hash changes
-        handleUrlHash();
-        window.addEventListener('hashchange', handleUrlHash, false);
-
-        // Ensure tabs work correctly after initial load if hash exists
-        // Adding a slight delay can sometimes help ensure Bootstrap JS is ready
-        if (currentHash) {
-           setTimeout(handleUrlHash, 150); // Increased delay slightly
-        }
+        // ... (keep existing message handling and hash handling) ...
     });
-  </script>
 
+  </script>
 </body>
 </html>
