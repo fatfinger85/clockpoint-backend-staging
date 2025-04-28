@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,11 +29,14 @@
             background: white;
             box-shadow: 0 1rem 3rem rgba(0,0,0,0.1); /* Enhanced shadow */
             border-top: 4px solid #0d6efd; /* Brand color accent on top */
+            /* text-center will center inline/inline-block elements like img, h1 */
+            text-align: center;
         }
         /* Logo styling */
         .login-logo {
             width: 150px; /* Logo size */
             margin-bottom: 1.5rem; /* Space below logo */
+            height: auto; /* Maintain aspect ratio */
         }
         /* Title styling */
         .login-title {
@@ -46,6 +48,8 @@
         .form-control {
             border-radius: 0.5rem;
             padding: 0.8rem 1rem; /* Adjust input padding */
+             /* Align text inside inputs to the left (default) */
+            text-align: left;
         }
         /* Enhanced focus style for inputs */
         .form-control:focus {
@@ -56,9 +60,6 @@
         .login-button {
             padding: 0.8rem 1.5rem; /* Button padding */
             font-weight: 500;
-            /* Optional: Use a specific brand color if desired */
-            /* background-color: #YOUR_BRAND_COLOR; */
-            /* border-color: #YOUR_BRAND_COLOR; */
         }
         /* Style for icon inside the login button */
         .login-button .bi {
@@ -69,7 +70,7 @@
         .error-message {
             color: #dc3545; /* Bootstrap danger color */
             font-size: 0.875em;
-            margin-top: -0.5rem; /* Pull up slightly */
+            margin-top: 0.5rem; /* Space above error */
             margin-bottom: 1rem; /* Space below error */
             text-align: center;
             min-height: 1.5em; /* Reserve space to prevent layout shift */
@@ -78,6 +79,8 @@
         /* Wrapper for password input and toggle button */
         .password-wrapper {
             position: relative;
+            /* Align input group content (icon, input) to the start */
+            text-align: left;
         }
         /* Add padding to the right of password input for the button */
         .password-wrapper .form-control {
@@ -102,27 +105,35 @@
              box-shadow: none;
              color: #0d6efd;
          }
+         /* Ensure form labels (if shown) are left-aligned */
+         .form-label {
+            text-align: left;
+            display: block; /* Make label take full width */
+         }
     </style>
 </head>
 <body>
     <main class="form-signin w-100 m-auto">
-        <div class="login-container text-center">
+        <div class="login-container">
             <img src="logo.png" alt="ClockPoint Logo" class="login-logo" onerror="this.style.display='none'"> <h1 class="h3 mb-4 fw-normal login-title">Login Administrador</h1>
 
             <div id="errorMessage" class="error-message">
                 </div>
-            <form method="POST" class="text-start needs-validation" novalidate>
-                <div class="mb-3 password-wrapper input-group has-validation"> <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="mb-3 password-wrapper input-group has-validation">
+                     <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                      <label for="password" class="form-label visually-hidden">Contraseña</label>
                      <input type="password" class="form-control" name="password" id="password" placeholder="Contraseña" required aria-describedby="passwordHelp">
                      <button type="button" class="btn password-toggle-btn" id="togglePassword" aria-label="Mostrar/ocultar contraseña">
                          <i class="bi bi-eye-slash"></i> </button>
-                     <div class="invalid-feedback">
-                         Por favor ingresa tu contraseña.
+                     <div class="invalid-feedback text-start"> Por favor ingresa tu contraseña.
                      </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 login-button mt-4"> Ingresar <i class="bi bi-box-arrow-in-right"></i> </button>
+                <button type="submit" class="btn btn-primary w-100 login-button mt-4">
+                    Ingresar <i class="bi bi-box-arrow-in-right"></i>
+                </button>
             </form>
         </div>
     </main>
@@ -134,28 +145,16 @@
 
         if (togglePassword && passwordInput) {
             togglePassword.addEventListener('click', function (e) {
-                // Prevent button click from submitting form if inside form tag
                 e.preventDefault();
-                // Toggle the type attribute of the password input
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-
-                // Toggle the eye icon
                 const icon = this.querySelector('i');
-                if (type === 'password') {
-                    // Show the slash icon when password hidden
-                    icon.classList.remove('bi-eye');
-                    icon.classList.add('bi-eye-slash');
-                } else {
-                    // Show the open eye icon when password visible
-                    icon.classList.remove('bi-eye-slash');
-                    icon.classList.add('bi-eye');
-                }
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
             });
         }
 
         // --- Bootstrap Form Validation Script ---
-        // (From Bootstrap docs: Disables form submissions if there are invalid fields)
         (() => {
         'use strict'
         const forms = document.querySelectorAll('.needs-validation')
@@ -171,17 +170,11 @@
         })()
 
         // --- Display Error Message ---
-        // This assumes the backend renders the error message directly into the
-        // #errorMessage div if it exists (like with Flask's render_template context).
-        // If the error message is empty or the div only contains whitespace,
-        // clear it to avoid showing an empty box.
+        // (Assumes backend renders error into #errorMessage)
         const errorMessageDiv = document.getElementById('errorMessage');
         if (errorMessageDiv && errorMessageDiv.textContent.trim() === '') {
-             // Optional: If you want to ensure it takes no space when empty
+             // Optional: Hide if empty
              // errorMessageDiv.style.display = 'none';
-        } else if (errorMessageDiv) {
-             // Ensure it's visible if there IS an error message
-             // errorMessageDiv.style.display = 'block';
         }
 
     </script>
