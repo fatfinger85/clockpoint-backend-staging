@@ -40,21 +40,17 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">👥 Gestionar Empleados</button>
         </li>
-        {/* */}
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab">📁 Proyectos</button>
         </li>
-        <li class="nav-item ms-auto"> {/* Pushed export link to the right */}
-          <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
+        <li class="nav-item ms-auto"> <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
         </li>
       </ul>
 
       <div class="tab-content mt-4" id="adminTabsContent">
-        {/* Historial Pane */}
         <div class="tab-pane fade show active" id="historial" role="tabpanel">
           <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
         </div>
-        {/* Add Employee Pane */}
         <div class="tab-pane fade" id="empleados" role="tabpanel">
           <form id="add-employee-form" action="/agregar-empleado" method="POST" class="mt-3 row g-2">
             <div class="col-md-5">
@@ -63,29 +59,23 @@
             <div class="col-md-5">
               <input type="text" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado">
             </div>
-            <div class="col-md-2 d-grid"> {/* Added d-grid for better button stacking on small screens */}
-              <button type="submit" class="btn btn-primary">Agregar</button>
+            <div class="col-md-2 d-grid"> <button type="submit" class="btn btn-primary">Agregar</button>
             </div>
           </form>
         </div>
-        {/* Manage Employees Pane */}
         <div class="tab-pane fade" id="gestion" role="tabpanel">
           <div class="table-responsive" id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
         </div>
 
-        {/* */}
         <div class="tab-pane fade" id="proyectos" role="tabpanel">
           <h4 class="mb-3">Gestionar Proyectos</h4>
-          {/* Form to add project */}
           <form id="add-project-form" action="/agregar-proyecto" method="POST" class="mb-4 row g-2">
             <div class="col-md-10">
               <input type="text" name="nombre_proyecto" placeholder="Nombre del Nuevo Proyecto" required class="form-control" aria-label="Nombre del nuevo proyecto">
             </div>
-            <div class="col-md-2 d-grid"> {/* Added d-grid */}
-              <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
+            <div class="col-md-2 d-grid"> <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
             </div>
           </form>
-          {/* Table to display projects */}
           <div class="table-responsive" id="tablaProyectos">Cargando proyectos...</div>
         </div>
 
@@ -101,12 +91,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          {/* Content will be set dynamically by JS */}
           ¿Estás seguro de que quieres eliminar <strong id="itemNameToDelete"></strong>? Esta acción no se puede deshacer.
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          {/* This button's action will be set dynamically by JS */}
           <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
         </div>
       </div>
@@ -295,12 +283,18 @@
         // Simple client-side check (can be enhanced)
         let missing = false;
         for (let pair of formData.entries()) {
-           if (!pair[1]) missing = true; // Check for empty values
+           // Check specifically for the project name field or employee name/pin
+           if ((form.id === 'add-project-form' && pair[0] === 'nombre_proyecto' && !pair[1]) ||
+               (form.id === 'add-employee-form' && (pair[0] === 'nombre' || pair[0] === 'pin') && !pair[1])) {
+                 missing = true;
+                 break; // Exit loop once a missing field is found
+            }
         }
         if (missing) {
-             showAdminAlert('Por favor, completa todos los campos.', 'warning');
+             showAdminAlert('Por favor, completa todos los campos requeridos.', 'warning');
              return;
         }
+
         // Specific PIN validation for employee form
         if (form.id === 'add-employee-form' && !/^\d+$/.test(formData.get('pin'))) {
              showAdminAlert('PIN debe ser numérico.', 'warning');
@@ -316,33 +310,37 @@
             // Check if redirect indicates success OR if error message is returned
             if (response.ok && response.redirected) {
                 // Success via redirect - parse message from URL (requires backend to send it)
-                const successParam = new URL(response.url).searchParams.get('success');
+                const currentUrl = new URL(response.url); // Use response URL after redirect
+                const successParam = currentUrl.searchParams.get('success');
+                const errorParam = currentUrl.searchParams.get('error'); // Also check for errors in redirect
+
+                if (errorParam) {
+                    throw new Error(errorParam); // Throw error if backend redirected with error
+                }
+
                  showAdminAlert(successParam || successMessage, 'success');
                  form.reset(); // Clear the form
                  refreshFunction(); // Refresh list
-                 // Optionally, navigate to the relevant tab if needed
-                 const targetTab = form.closest('.tab-pane').id;
-                 if (targetTab) {
-                     const tabButton = document.querySelector(`button[data-bs-target="#${targetTab}"]`);
-                     if (tabButton) new bootstrap.Tab(tabButton).show();
+
+                 // Navigate to the relevant tab based on the hash in the redirected URL
+                 if (currentUrl.hash) {
+                     const tabButton = document.querySelector(`button[data-bs-target="${currentUrl.hash}"]`);
+                     if (tabButton && bootstrap.Tab) new bootstrap.Tab(tabButton).show();
                  }
+
             } else if (!response.ok) {
-                // Handle errors returned directly or via redirect parameters
-                 const errorParam = new URL(response.url).searchParams.get('error');
-                 if(errorParam){
-                    throw new Error(errorParam);
-                 } else {
-                    const errorText = await response.text(); // Try reading direct error text
-                    throw new Error(errorText || `Error ${response.status}`);
-                 }
+                // Handle errors returned directly (non-redirect)
+                const errorText = await response.text(); // Try reading direct error text
+                throw new Error(errorText || `Error ${response.status}`);
             } else {
-                 // Handle non-redirect OK response if backend changes
+                 // Handle non-redirect OK response if backend changes (less likely with current setup)
                  showAdminAlert(successMessage, 'success');
                  form.reset();
                  refreshFunction();
             }
         } catch (error) {
              console.error("Error submitting form:", error);
+             // Display the error message caught, which might come from backend redirect or direct response
              showAdminAlert(`Error: ${error.message}`, 'danger');
         }
     }
@@ -367,8 +365,11 @@
             if (tabButton) {
                 // Need to ensure Bootstrap's Tab is loaded
                 if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
-                    const tab = new bootstrap.Tab(tabButton);
-                    tab.show();
+                    // Check if the tab is already active to prevent unnecessary redraw/flicker
+                    if (!tabButton.classList.contains('active')) {
+                       const tab = new bootstrap.Tab(tabButton);
+                       tab.show();
+                    }
                 } else {
                     console.warn("Bootstrap Tab component not ready for hash navigation.");
                     // Fallback or retry logic might be needed
@@ -403,28 +404,29 @@
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
+        const currentHash = window.location.hash; // Preserve hash
+
         if (successMsg) {
             showAdminAlert(successMsg, 'success');
             // Clean the URL, keeping the hash
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+            window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         } else if (errorMsg) {
              showAdminAlert(errorMsg, 'danger');
-              window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+              window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         }
 
         // Activate tab based on URL hash (e.g., after redirect)
+        // Call immediately and also set up listener for future hash changes
         handleUrlHash();
-        // Listen for hash changes if tabs are clicked manually
         window.addEventListener('hashchange', handleUrlHash, false);
 
         // Ensure tabs work correctly after initial load if hash exists
-        if (window.location.hash) {
-            // Small delay to ensure Bootstrap JS is fully ready
-            setTimeout(handleUrlHash, 100);
+        // Adding a slight delay can sometimes help ensure Bootstrap JS is ready
+        if (currentHash) {
+           setTimeout(handleUrlHash, 150); // Increased delay slightly
         }
     });
-
-
   </script>
+
 </body>
 </html>
