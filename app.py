@@ -62,36 +62,41 @@ def submit():
     nombre = data.get("nombre")
     pin = data.get("pin")
     accion = data.get("accion")
+    proyecto = data.get("proyecto") # <-- Get the selected project (might be None or empty)
 
     # Basic Input Validation
     if not nombre or not pin or not accion:
         logging.warning(f"Submit attempt with missing data: name={bool(nombre)}, pin={bool(pin)}, action={bool(accion)}")
         return jsonify({"status": "error", "message": "Nombre, PIN, y acción son requeridos."}), 400
 
-    # Optional: Add more specific PIN validation (e.g., check if numeric)
     if not pin.isdigit():
         logging.warning(f"Submit attempt with non-numeric PIN from user: {nombre}")
         return jsonify({"status": "error", "message": "PIN debe ser numérico."}), 400
 
-    zona = timezone("America/Chicago") # Or configure via env var if needed elsewhere
+    # Handle empty project selection - store as None (NULL) in the database
+    if not proyecto: # Checks for None or empty string ""
+        proyecto_db = None
+    else:
+        proyecto_db = proyecto
+
+    zona = timezone("America/Chicago")
     timestamp = datetime.now(zona).strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        # Verify employee credentials
         empleados = supabase.table("empleados").select("id").eq("nombre", nombre).eq("pin", pin).execute().data
         if not empleados:
             logging.warning(f"Submit attempt with incorrect PIN for user: {nombre}")
-            return jsonify({"status": "error", "message": "Nombre o PIN incorrecto."}), 401 # Use 401 Unauthorized
+            return jsonify({"status": "error", "message": "Nombre o PIN incorrecto."}), 401
 
-        # Insert the clocking record
+        # Insert the record including the project
         insert_response = supabase.table("registros").insert({
             "nombre": nombre,
             "accion": accion,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "proyecto": proyecto_db # <-- Add project to the insert data
         }).execute()
 
-        # Optional: Check insert_response for errors if Supabase client provides details
-        logging.info(f"Record submitted successfully for user: {nombre}, action: {accion}")
+        logging.info(f"Record submitted successfully for user: {nombre}, action: {accion}, project: {proyecto_db}")
         return jsonify({"status": "success", "message": f"{accion} registrado para {nombre}"})
 
     except Exception as e:
@@ -251,6 +256,23 @@ def eliminar_proyecto():
         logging.error(f"Error deleting project {nombre_proyecto}: {str(e)}")
         return jsonify({"status": "error", "message": "Error interno al eliminar proyecto."}), 500
 
+@app.route("/get-proyectos-list")
+def get_proyectos_list():
+    """Fetches just project names for the dropdown."""
+    # No admin check needed here, as this is for the public clock-in page
+    if not supabase:
+        return jsonify({"error": "Backend database not configured."}), 500
+
+    try:
+        # Fetch only the 'nombre' column, ordered by name
+        data = supabase.table("proyectos").select("nombre").order("nombre", desc=False).execute().data
+        # Extract just the names into a list
+        project_names = [item['nombre'] for item in data]
+        return jsonify(project_names)
+    except Exception as e:
+        logging.error(f"Error fetching project list: {str(e)}")
+        return jsonify({"error": "Could not fetch project list"}), 500
+
 @app.route("/registros")
 def registros():
     if not session.get("admin"):
@@ -312,31 +334,34 @@ def exportar():
         return "Backend database not configured.", 500
 
     try:
+        # Select all columns, including the new 'proyecto' column
         data = supabase.table("registros").select("*").order("timestamp", desc=True).execute().data
         if not data:
             return "No hay registros para exportar.", 200
 
-        csv_lines = ["nombre,accion,timestamp"] # Start with header row
+        # Add 'proyecto' to header
+        csv_lines = ["nombre,accion,timestamp,proyecto"]
         for row in data:
             # Prepare data, handling potential None values and escaping quotes
-            nombre = row.get('nombre', '') or '' # Ensure string, handle None
-            accion = row.get('accion', '') or '' # Ensure string, handle None
-            timestamp = row.get('timestamp', '') or '' # Ensure string, handle None
+            nombre = row.get('nombre', '') or ''
+            accion = row.get('accion', '') or ''
+            timestamp = row.get('timestamp', '') or ''
+            proyecto = row.get('proyecto', '') or '' # Handle None/empty project
 
-            # Escape double quotes for CSV compatibility
+            # Escape double quotes
             nombre_escaped = nombre.replace('"', '""')
             accion_escaped = accion.replace('"', '""')
             timestamp_escaped = timestamp.replace('"', '""')
+            proyecto_escaped = proyecto.replace('"', '""') # Escape project name
 
-            # Create the CSV line using f-string with the prepared variables
-            csv_lines.append(f'"{nombre_escaped}","{accion_escaped}","{timestamp_escaped}"')
+            # Add project to the CSV line
+            csv_lines.append(f'"{nombre_escaped}","{accion_escaped}","{timestamp_escaped}","{proyecto_escaped}"')
 
-        # Join all lines with a newline character
-        csv_output = "\n".join(csv_lines) + "\n" # Add final newline
+        csv_output = "\n".join(csv_lines) + "\n"
 
-        logging.info("Generated CSV export.")
+        logging.info("Generated CSV export including projects.")
         return csv_output, 200, {
-            "Content-Type": "text/csv; charset=utf-8", # Specify charset
+            "Content-Type": "text/csv; charset=utf-8",
             "Content-Disposition": f"attachment;filename=registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         }
     except Exception as e:
