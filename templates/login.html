@@ -1,183 +1,39 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>ClockPoint - Login Admin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        /* Ensure html and body take full height for vertical centering */
-        html, body {
-            height: 100%;
-        }
-        body {
-            display: flex; /* Enable flexbox */
-            align-items: center; /* Vertical center */
-            justify-content: center; /* Horizontal center */
-            /* Subtle gradient background */
-            background: linear-gradient(135deg, #eef2f7 0%, #f0f2f5 100%);
-            padding-top: 2rem; /* Add some padding */
-            padding-bottom: 2rem;
-        }
-        /* Style the main login card */
-        .login-container {
-            max-width: 420px; /* Max width of the card */
-            width: 100%; /* Full width on smaller screens */
-            padding: 2.5rem; /* Increased padding */
-            border-radius: 1rem; /* Softer corners */
-            background: white;
-            box-shadow: 0 1rem 3rem rgba(0,0,0,0.1); /* Enhanced shadow */
-            border-top: 4px solid #0d6efd; /* Brand color accent on top */
-            /* text-center will center inline/inline-block elements like img, h1 */
-            text-align: center;
-        }
-        /* Logo styling */
-        .login-logo {
-            width: 150px; /* Logo size */
-            margin-bottom: 1.5rem; /* Space below logo */
-            height: auto; /* Maintain aspect ratio */
-        }
-        /* Title styling */
-        .login-title {
-            font-weight: 600; /* Make title slightly bolder */
-            margin-bottom: 1.5rem; /* Space below title */
-            color: #343a40; /* Darker title color */
-        }
-        /* Input field styling */
-        .form-control {
-            border-radius: 0.5rem;
-            padding: 0.8rem 1rem; /* Adjust input padding */
-             /* Align text inside inputs to the left (default) */
-            text-align: left;
-        }
-        /* Enhanced focus style for inputs */
-        .form-control:focus {
-             border-color: #86b7fe;
-             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-        /* Login button styling */
-        .login-button {
-            padding: 0.8rem 1.5rem; /* Button padding */
-            font-weight: 500;
-        }
-        /* Style for icon inside the login button */
-        .login-button .bi {
-            margin-left: 0.5rem;
-            vertical-align: text-bottom; /* Align icon better */
-        }
-        /* Placeholder for error messages */
-        .error-message {
-            color: #dc3545; /* Bootstrap danger color */
-            font-size: 0.875em;
-            margin-top: 0.5rem; /* Space above error */
-            margin-bottom: 1rem; /* Space below error */
-            text-align: center;
-            min-height: 1.5em; /* Reserve space to prevent layout shift */
-            font-weight: 500;
-        }
-        /* Wrapper for password input and toggle button */
-        .password-wrapper {
-            position: relative;
-            /* Align input group content (icon, input) to the start */
-            text-align: left;
-        }
-        /* Add padding to the right of password input for the button */
-        .password-wrapper .form-control {
-            padding-right: 3.5rem; /* Space for the button */
-        }
-        /* Style for the show/hide password toggle button */
-        .password-toggle-btn {
-            position: absolute;
-            top: 50%;
-            right: 0.5rem; /* Position inside the input field */
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            padding: 0.375rem 0.75rem;
-            cursor: pointer;
-            color: #6c757d; /* Muted icon color */
-            z-index: 5; /* Ensure it's above the input */
-        }
-        /* Remove outline and change color on focus for toggle button */
-         .password-toggle-btn:focus {
-             outline: none;
-             box-shadow: none;
-             color: #0d6efd;
-         }
-         /* Ensure form labels (if shown) are left-aligned */
-         .form-label {
-            text-align: left;
-            display: block; /* Make label take full width */
-         }
-    </style>
+  <meta charset="UTF-8">
+  <title>ClockPoint - Login Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f2f5;
+    }
+    .login-container {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+    }
+    .form-control {
+      border-radius: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-    <main class="form-signin w-100 m-auto">
-        <div class="login-container">
-            <img src="logo.png" alt="ClockPoint Logo" class="login-logo" onerror="this.style.display='none'"> <h1 class="h3 mb-4 fw-normal login-title">Login Administrador</h1>
-
-            <div id="errorMessage" class="error-message">
-                </div>
-
-            <form method="POST" class="needs-validation" novalidate>
-                <div class="mb-3 password-wrapper input-group has-validation">
-                     <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                     <label for="password" class="form-label visually-hidden">Contraseña</label>
-                     <input type="password" class="form-control" name="password" id="password" placeholder="Contraseña" required aria-describedby="passwordHelp">
-                     <button type="button" class="btn password-toggle-btn" id="togglePassword" aria-label="Mostrar/ocultar contraseña">
-                         <i class="bi bi-eye-slash"></i> </button>
-                     <div class="invalid-feedback text-start"> Por favor ingresa tu contraseña.
-                     </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100 login-button mt-4">
-                    Ingresar <i class="bi bi-box-arrow-in-right"></i>
-                </button>
-            </form>
+  <div class="container">
+    <div class="login-container">
+      <h3 class="text-center text-primary mb-4">🔐 Login Administrador</h3>
+      <form method="POST">
+        <div class="mb-3">
+          <label for="password" class="form-label">Contraseña</label>
+          <input type="password" class="form-control" name="password" id="password" placeholder="********" required>
         </div>
-    </main>
-
-    <script>
-        // --- Show/Hide Password Functionality ---
-        const togglePassword = document.querySelector('#togglePassword');
-        const passwordInput = document.querySelector('#password');
-
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', function (e) {
-                e.preventDefault();
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                const icon = this.querySelector('i');
-                icon.classList.toggle('bi-eye');
-                icon.classList.toggle('bi-eye-slash');
-            });
-        }
-
-        // --- Bootstrap Form Validation Script ---
-        (() => {
-        'use strict'
-        const forms = document.querySelectorAll('.needs-validation')
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-            }, false)
-        })
-        })()
-
-        // --- Display Error Message ---
-        // (Assumes backend renders error into #errorMessage)
-        const errorMessageDiv = document.getElementById('errorMessage');
-        if (errorMessageDiv && errorMessageDiv.textContent.trim() === '') {
-             // Optional: Hide if empty
-             // errorMessageDiv.style.display = 'none';
-        }
-
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
