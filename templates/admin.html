@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -181,8 +182,7 @@
             </div>
 
              <div class="tab-pane fade" id="gestion" role="tabpanel" aria-labelledby="gestion-tab">
-               <h4 class="mb-3">Gestionar Empleados</h4>
-               <div class="table-responsive" id="tablaEmpleados">
+               <h4 class="mb-3">Lista de Empleados</h4> <div class="table-responsive" id="tablaEmpleados">
                    <div class="loading-indicator">
                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...
                    </div>
@@ -204,15 +204,15 @@
                     </div>
                  </form>
               </div>
-              <h5 class="mt-4 mb-3">Proyectos Existentes</h5>
-              <div class="table-responsive" id="tablaProyectos">
+              <h5 class="mt-4 mb-3">Lista de Proyectos</h5> <div class="table-responsive" id="tablaProyectos">
                    <div class="loading-indicator">
                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...
                    </div>
               </div>
             </div>
 
-          </div> </div> </div> </div> <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+          </div> </div> </div> </div>
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header">
           <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -234,12 +234,11 @@
     const tablaEmpleados = document.getElementById("tablaEmpleados");
     const tablaProyectos = document.getElementById("tablaProyectos");
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
-    // --- Ensure these IDs match the elements INSIDE the modal HTML ---
+    // References for modal (kept in case needed elsewhere, but not used by employee/project tables now)
     const itemNameToDeleteSpan = document.getElementById('itemNameToDelete');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    // --- End Ensure ---
-    let deleteConfirmModal = null; // To hold the Bootstrap Modal instance
-    let deleteAction = null; // To hold the function to execute on delete confirmation
+    let deleteConfirmModal = null;
+    let deleteAction = null; // Function to execute on delete confirmation
 
     // --- Utility Function: Escape HTML ---
     function escapeHtml(unsafe) {
@@ -301,6 +300,7 @@
       }
     }
 
+    // --- MODIFIED: Load Employees (No Delete Column/Button) ---
     async function cargarEmpleados() {
       tablaEmpleados.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
@@ -312,14 +312,15 @@
           if (data.length === 0) {
               tablaEmpleados.innerHTML = '<p class="text-muted text-center p-3">No hay empleados registrados.</p>'; return;
           }
-          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
+          // Removed "Acciones" header
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
           data.forEach(e => {
             const nombre = e.nombre || '';
             const pin = e.pin || '';
+            // Removed delete button cell
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
-                      <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')"><i class="bi bi-trash3"></i> Eliminar</button></td>
                     </tr>`;
           });
           html += "</tbody></table>";
@@ -330,6 +331,7 @@
       }
     }
 
+    // --- MODIFIED: Load Projects (No Delete Column/Button) ---
     async function cargarProyectos() {
       tablaProyectos.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
@@ -342,12 +344,13 @@
               tablaProyectos.innerHTML = '<p class="text-muted text-center p-3">No hay proyectos registrados.</p>';
               return;
           }
-          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
+          // Removed "Acciones" header
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
           data.forEach(p => {
             const nombre = p.nombre || '';
+            // Removed delete button cell
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
-                      <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')"><i class="bi bi-trash3"></i> Eliminar</button></td>
                     </tr>`;
           });
           html += "</tbody></table>";
@@ -358,93 +361,53 @@
       }
     }
 
-    // --- Unified Delete Logic ---
-
+    // --- Delete Logic (Kept for potential future use, but not called by employee/project tables) ---
     function confirmDeleteItem(buttonElement, itemType) {
-        console.log(`confirmDeleteItem called for type: ${itemType}`); // DEBUG
+        // This function is no longer called by the employee/project tables
+        // but is kept here in case it's needed for other features later.
+        console.log(`confirmDeleteItem called for type: ${itemType}`);
         const itemName = buttonElement.getAttribute('data-name');
-        // --- Check if elements exist before using them ---
-        if (!itemNameToDeleteSpan) {
-             console.error("Element with ID 'itemNameToDelete' not found in modal.");
-             showAdminAlert("Error: Elemento del modal no encontrado.", "danger");
-             return;
+        if (!itemNameToDeleteSpan || !deleteConfirmModal) {
+             console.error("Modal elements not found or modal not initialized."); return;
         }
-         if (!deleteConfirmModal) {
-             console.error("Delete confirmation modal not initialized.");
-             showAdminAlert("Error: Modal de confirmación no inicializado.", "danger");
-             return;
-         }
-        // --- End Check ---
-
-        if (!itemName) {
-            console.error("Could not determine item name for deletion.");
-            showAdminAlert("Error: No se pudo identificar el item a eliminar.", "danger");
-            return;
-        }
-        console.log(`Item name to delete: ${itemName}`); // DEBUG
-
-        itemNameToDeleteSpan.textContent = itemName; // Update modal text
-
-        // Set the delete action based on itemType
-        if (itemType === 'employee') {
+        if (!itemName) { console.error("Item name not found."); return; }
+        itemNameToDeleteSpan.textContent = itemName;
+        if (itemType === 'employee') { // Example: Still define action if needed
             deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
-            console.log("Set deleteAction for employee."); // DEBUG
         } else if (itemType === 'project') {
-            deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
-            console.log("Set deleteAction for project."); // DEBUG
-        } else {
-            console.error("Unknown item type for deletion:", itemType);
-            showAdminAlert(`Error: Tipo de item desconocido '${itemType}'.`, "danger");
-            return;
-        }
-
-        // Show the modal
-        console.log("Showing delete confirmation modal."); // DEBUG
+             deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
+        } else { console.error("Unknown item type:", itemType); return; }
         deleteConfirmModal.show();
-
     }
-
     async function performDelete(endpoint, name, refreshFunction) {
-        console.log(`performDelete called: endpoint=${endpoint}, name=${name}`); // DEBUG
-        if (!name || !endpoint || !refreshFunction) {
-             console.error("performDelete missing required arguments."); // DEBUG
-             return;
-        }
-
+        // This function is no longer called by the employee/project tables
+        console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
+        if (!name || !endpoint || !refreshFunction) return;
         clearAdminAlert();
         const deleteBtn = document.getElementById('confirmDeleteBtn');
         if(deleteBtn) deleteBtn.disabled = true;
-
         try {
-            console.log(`Sending POST request to ${endpoint} for ${name}`); // DEBUG
             const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nombre: name })
             });
-            console.log(`Response status from ${endpoint}: ${response.status}`); // DEBUG
             const result = await response.json();
-            console.log(`Response body from ${endpoint}:`, result); // DEBUG
-
             if (response.ok && result.status === 'success') {
                 showAdminAlert(`${name} eliminado correctamente.`, 'success');
-                refreshFunction(); // Refresh the table
-            } else {
-                // Use message from backend result if available
-                throw new Error(result.message || `Error ${response.status} al eliminar`);
-            }
+                refreshFunction();
+            } else { throw new Error(result.message || `Error ${response.status}`); }
         } catch (error) {
-            console.error(`Error deleting ${name} from ${endpoint}:`, error);
+            console.error(`Error deleting ${name}:`, error);
             showAdminAlert(`Error al eliminar ${name}: ${escapeHtml(error.message)}`, 'danger');
         } finally {
-             console.log("Hiding modal and resetting deleteAction."); // DEBUG
-             if (deleteConfirmModal) deleteConfirmModal.hide(); // Hide the modal
-             if(deleteBtn) deleteBtn.disabled = false; // Re-enable button
-             deleteAction = null; // Clear the stored action
+             if (deleteConfirmModal) deleteConfirmModal.hide();
+             if(deleteBtn) deleteBtn.disabled = false;
+             deleteAction = null;
         }
     }
 
     // --- Unified Form Submission Handling ---
+    // (No changes needed in handleFormSubmit)
     async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
         event.preventDefault();
         clearAdminAlert();
@@ -518,55 +481,32 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("Admin Panel DOM Loaded. Initializing..."); // DEBUG
-        // Initialize Modal
+        // Initialize Modal (still needed if confirmDeleteItem is kept)
         try {
             const modalElement = document.getElementById('deleteConfirmModal');
-            // --- Check if modal element exists before initializing ---
             if (modalElement) {
                 deleteConfirmModal = new bootstrap.Modal(modalElement);
-                console.log("Delete confirmation modal initialized."); // DEBUG
-            } else {
-                 console.error("Delete confirmation modal element not found in DOM.");
-            }
-             // --- Check if button element exists before adding listener ---
+            } else { console.error("Delete confirmation modal element not found in DOM."); }
+
              if (confirmDeleteBtn) {
                  confirmDeleteBtn.addEventListener('click', () => {
-                    console.log("Modal confirm delete button clicked."); // DEBUG
-                    if (typeof deleteAction === 'function') {
-                        console.log("Executing stored deleteAction."); // DEBUG
-                        deleteAction();
-                    } else {
-                        console.error("No delete action specified for modal confirmation.");
-                    }
+                    if (typeof deleteAction === 'function') { deleteAction(); }
+                    else { console.error("No delete action specified for modal confirmation."); }
                 });
-                console.log("Event listener attached to modal confirm button."); // DEBUG
-             } else {
-                 console.error("Confirm delete button ('confirmDeleteBtn') not found in DOM.");
-             }
-             // --- End Checks ---
+             } else { console.error("Confirm delete button ('confirmDeleteBtn') not found in DOM."); }
 
-        } catch(e) {
-             console.error("Failed to initialize Bootstrap modal or attach listener:", e);
-        }
+        } catch(e) { console.error("Failed to initialize Bootstrap modal or attach listener:", e); }
 
         // Attach Form Handlers
         const addEmployeeForm = document.getElementById('add-employee-form');
         const addProjectForm = document.getElementById('add-project-form');
-        if (addEmployeeForm) {
-            addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-            console.log("Submit listener attached to add employee form."); // DEBUG
-        }
-        if (addProjectForm) {
-            addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
-             console.log("Submit listener attached to add project form."); // DEBUG
-        }
+        if (addEmployeeForm) addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
+        if (addProjectForm) addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
 
         // Initial Data Loads
-        console.log("Initiating initial data loads..."); // DEBUG
         cargarHistorial();
-        cargarEmpleados();
-        cargarProyectos();
+        cargarEmpleados(); // Will load employees without delete button
+        cargarProyectos(); // Will load projects without delete button
 
         // Handle URL Params/Hash
         const urlParams = new URLSearchParams(window.location.search);
@@ -580,11 +520,9 @@
              showAdminAlert(errorMsg, 'danger');
              window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         }
-        console.log("Handling initial URL hash if present..."); // DEBUG
         handleUrlHash();
         window.addEventListener('hashchange', () => handleUrlHash(), false);
         if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
-        console.log("Initialization complete."); // DEBUG
     });
 
   </script>
