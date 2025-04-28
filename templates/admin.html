@@ -2,105 +2,173 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>ClockPoint - Panel Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #f8f9fa; }
-    .nav-tabs .nav-link.active { background-color: #0d6efd; color: white; }
-    .nav-tabs .nav-link { color: #0d6efd; cursor: pointer; }
-    .card { border-radius: 12px; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); }
-    .table { border-radius: 8px; overflow: hidden; margin-bottom: 0; /* Remove default margin for better spacing control */ }
-    th { background-color: #e9ecef; }
-    #admin-alert-placeholder { min-height: 50px; }
-    .table button { margin-left: 5px; }
-    .table-responsive { margin-bottom: 1rem; /* Add some space below tables */ }
-
-    @media (max-width: 576px) {
-      .card { padding: 20px; }
-      .nav-tabs .nav-link { font-size: 0.9rem; padding: 0.5rem; }
-      .table-responsive { overflow-x: auto; }
-      /* Adjust form layout on small screens */
-      #add-project-form .col-md-2, #add-employee-form .col-md-2 {
-          margin-top: 0.5rem;
-      }
-       #add-project-form .col-md-10, #add-employee-form .col-md-5 {
-          padding-right: 0.5rem; /* Adjust spacing */
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>ClockPoint - Panel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* Light background */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .main-card {
+            border-radius: 0.75rem; /* Slightly softer corners */
+            box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.07); /* Softer shadow */
+            border: none; /* Remove default card border */
+            overflow: hidden; /* Ensure child elements respect border-radius */
+        }
+        .main-card .card-header {
+             background-color: #e9ecef; /* Light header background */
+             border-bottom: 1px solid #dee2e6;
+             padding-top: 1.25rem;
+             padding-bottom: 1.25rem;
+        }
+         .main-card .card-body {
+             padding: 2rem; /* More padding inside card body */
+        }
+        /* Tab styling */
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 1.5rem; /* Space below tabs */
+        }
+        .nav-tabs .nav-link {
+            color: #495057; /* Darker inactive tab text */
+            border: 1px solid transparent;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            padding: 0.75rem 1rem; /* Adjust tab padding */
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .nav-tabs .nav-link:hover {
+            border-color: #e9ecef #e9ecef #dee2e6;
+            background-color: #e9ecef; /* Subtle hover */
+            color: #0d6efd;
+        }
+        .nav-tabs .nav-link.active {
+            color: #fff; /* White text for active tab */
+            background-color: #0d6efd; /* Primary color background */
+            border-color: #0d6efd #0d6efd #fff; /* Match border */
+            border-bottom: 1px solid #0d6efd; /* Ensure bottom border matches bg */
+        }
+        /* Add icons to tabs */
+        .nav-tabs .nav-link .bi {
+            margin-right: 0.4rem;
+            vertical-align: text-bottom;
+        }
+        /* Table styling */
+        .table {
+            margin-bottom: 0; /* Remove default margin */
+            border: 1px solid #dee2e6; /* Add subtle border */
+        }
+        .table thead th {
+            background-color: #f8f9fa; /* Lighter table header */
+            border-bottom-width: 1px; /* Thinner bottom border */
+            font-weight: 600;
+            color: #495057;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05); /* Subtle blue hover */
+        }
+        /* Form section styling */
+        .form-section {
+            background-color: #fff; /* White background for forms */
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5rem; /* Space below form sections */
+        }
+        /* Alert placeholder */
+        #admin-alert-placeholder {
+            min-height: 50px;
+            margin-bottom: 1rem; /* Space below alerts */
+        }
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .main-card .card-body { padding: 1.5rem; }
+            .nav-tabs .nav-link { font-size: 0.85rem; padding: 0.6rem 0.8rem; }
+            .form-section { padding: 1rem; }
+            /* Ensure buttons stack nicely in forms on small screens */
+            #add-project-form .col-md-2, #add-employee-form .col-md-2 {
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container py-5">
-    <div class="card p-4">
-      <h2 class="text-center mb-4 text-primary">Panel de Administración</h2>
-
-      <div id="admin-alert-placeholder"></div>
-
-      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab">🕓 Historial</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">➕ Agregar Empleado</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">👥 Gestionar Empleados</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab">📁 Proyectos</button>
-        </li>
-        <li class="nav-item ms-auto"> <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
-        </li>
-      </ul>
-
-      <div class="tab-content mt-4" id="adminTabsContent">
-        <div class="tab-pane fade show active" id="historial" role="tabpanel">
-           <h4 class="mb-3">Historial de Registros</h4>
-           <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
-        </div>
-        <div class="tab-pane fade" id="empleados" role="tabpanel">
-           <h4 class="mb-3">Agregar Nuevo Empleado</h4>
-           <form id="add-employee-form" action="/agregar-empleado" method="POST" class="mt-3 row g-2">
-            <div class="col-md-5">
-              <label for="add-emp-nombre" class="form-label visually-hidden">Nombre Empleado</label>
-              <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre Empleado" required class="form-control" aria-label="Nombre del nuevo empleado">
-            </div>
-            <div class="col-md-5">
-              <label for="add-emp-pin" class="form-label visually-hidden">PIN</label>
-              <input type="text" id="add-emp-pin" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado">
-            </div>
-            <div class="col-md-2 d-grid">
-              <button type="submit" class="btn btn-primary">Agregar</button>
-            </div>
-          </form>
-        </div>
-        <div class="tab-pane fade" id="gestion" role="tabpanel">
-           <h4 class="mb-3">Gestionar Empleados</h4>
-           <div class="table-responsive" id="tablaEmpleados">Cargando empleados...</div>
-        </div>
-
-        <div class="tab-pane fade" id="proyectos" role="tabpanel">
-          <h4 class="mb-3">Gestionar Proyectos</h4>
-          <form id="add-project-form" action="/agregar-proyecto" method="POST" class="mb-4 row g-2">
-            <div class="col-md-10">
-               <label for="add-proj-nombre" class="form-label visually-hidden">Nombre Proyecto</label>
-              <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del Nuevo Proyecto" required class="form-control" aria-label="Nombre del nuevo proyecto">
-            </div>
-            <div class="col-md-2 d-grid">
-              <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
-            </div>
-          </form>
-          <h5 class="mt-4 mb-3">Proyectos Existentes</h5>
-           <div class="table-responsive" id="tablaProyectos">Cargando proyectos...</div>
-        </div>
-
+  <div class="container py-4"> <div class="card main-card">
+      <div class="card-header text-center">
+         <h2 class="mb-0 text-primary">Panel de Administración</h2>
       </div>
-    </div>
-  </div>
+      <div class="card-body">
 
-  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+          <div id="admin-alert-placeholder"></div>
+
+          <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab"><i class="bi bi-clock-history"></i> Historial</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab"><i class="bi bi-person-plus-fill"></i> Agregar Empleado</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab"><i class="bi bi-people-fill"></i> Gestionar Empleados</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab"><i class="bi bi-folder-fill"></i> Proyectos</button>
+            </li>
+            <li class="nav-item ms-auto"> <a class="nav-link text-success" href="/exportar" target="_blank"><i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar CSV</a>
+            </li>
+          </ul>
+
+          <div class="tab-content pt-3" id="adminTabsContent"> <div class="tab-pane fade show active" id="historial" role="tabpanel">
+               <h4 class="mb-3">Historial de Registros</h4>
+               <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
+            </div>
+
+            <div class="tab-pane fade" id="empleados" role="tabpanel">
+              <div class="form-section">
+                 <h5 class="mb-3">Agregar Nuevo Empleado</h5>
+                 <form id="add-employee-form" action="/agregar-empleado" method="POST" class="row g-3"> <div class="col-md-5">
+                      <label for="add-emp-nombre" class="form-label">Nombre Empleado</label>
+                      <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre completo" required class="form-control">
+                    </div>
+                    <div class="col-md-5">
+                      <label for="add-emp-pin" class="form-label">PIN</label>
+                      <input type="text" id="add-emp-pin" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end"> <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                    </div>
+                 </form>
+              </div>
+            </div>
+
+             <div class="tab-pane fade" id="gestion" role="tabpanel">
+               <h4 class="mb-3">Gestionar Empleados</h4>
+               <div class="table-responsive" id="tablaEmpleados">Cargando empleados...</div>
+            </div>
+
+
+            <div class="tab-pane fade" id="proyectos" role="tabpanel">
+              <div class="form-section">
+                 <h5 class="mb-3">Agregar Nuevo Proyecto</h5>
+                 <form id="add-project-form" action="/agregar-proyecto" method="POST" class="row g-3">
+                    <div class="col-md-10">
+                       <label for="add-proj-nombre" class="form-label">Nombre Proyecto</label>
+                       <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del proyecto" required class="form-control">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                       <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                    </div>
+                 </form>
+              </div>
+              <h5 class="mt-4 mb-3">Proyectos Existentes</h5>
+              <div class="table-responsive" id="tablaProyectos">Cargando proyectos...</div>
+            </div>
+
+          </div> </div> </div> </div> <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -118,7 +186,6 @@
     </div>
   </div>
 
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // --- DOM Elements ---
@@ -128,19 +195,30 @@
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
     const itemNameToDeleteSpan = document.getElementById('itemNameToDelete');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    let deleteConfirmModal = null; // Will hold the Bootstrap Modal instance
-    let deleteAction = null; // Will hold the function to execute on delete confirmation
+    let deleteConfirmModal = null;
+    let deleteAction = null;
+
+    // --- Utility Function ---
+    function escapeHtml(unsafe) {
+       if (typeof unsafe !== 'string') return '';
+       return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
     // --- Alert Helper ---
     function showAdminAlert(message, type = 'danger') {
       const wrapper = document.createElement('div');
       wrapper.innerHTML = [
         `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
-        `   <div>${escapeHtml(message)}</div>`, // Escape message content
+        `   <div>${escapeHtml(message)}</div>`,
         '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
         '</div>'
       ].join('');
-      adminAlertPlaceholder.innerHTML = ''; // Clear previous alerts
+      adminAlertPlaceholder.innerHTML = '';
       adminAlertPlaceholder.append(wrapper);
     }
     function clearAdminAlert() {
@@ -148,32 +226,23 @@
     }
 
     // --- Data Loading Functions ---
-
     async function cargarHistorial() {
-      tablaHistorial.innerHTML = 'Cargando historial...';
+      tablaHistorial.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
-          const res = await fetch('/registros'); // Fetches records from backend
+          const res = await fetch('/registros');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
           const data = await res.json();
-
-          // Log data structure (can be removed in production)
-          // console.log("Data received from /registros:", data);
-
           if (data.error) { throw new Error(data.error); }
           if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
           if (data.length === 0) {
-              tablaHistorial.innerHTML = '<p class="text-muted text-center">No hay registros de historial.</p>'; return;
+              tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>'; return;
           }
-
-          let html = "<table class='table table-bordered table-striped table-hover'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>";
-
+          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>"; // Added align-middle
           data.forEach(r => {
-            // Safely get data, providing default empty strings
             const nombre = r.nombre || '';
             const accion = r.accion || '';
             const timestamp = r.timestamp || '';
-            const proyecto = r.proyecto || ''; // Get project name, default to empty string if null/missing
-
+            const proyecto = r.proyecto || '-'; // Show '-' if no project
             html += `<tr>
                         <td>${escapeHtml(nombre)}</td>
                         <td>${escapeHtml(accion)}</td>
@@ -187,30 +256,28 @@
           console.error("Error loading history:", error);
           tablaHistorial.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
       }
-    } // End of cargarHistorial
+    }
 
     async function cargarEmpleados() {
-      tablaEmpleados.innerHTML = 'Cargando empleados...';
+      tablaEmpleados.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
           const res = await fetch('/empleados');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
           const data = await res.json();
-
           if (data.error) { throw new Error(data.error); }
           if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
           if (data.length === 0) {
-              tablaEmpleados.innerHTML = '<p class="text-muted text-center">No hay empleados registrados.</p>'; return;
+              tablaEmpleados.innerHTML = '<p class="text-muted text-center p-3">No hay empleados registrados.</p>'; return;
           }
-
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
           data.forEach(e => {
             const nombre = e.nombre || '';
-            const pin = e.pin || ''; // Be cautious displaying PINs
+            const pin = e.pin || '';
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')">Eliminar</button></td>
-                    </tr>`;
+                      <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')"><i class="bi bi-trash3"></i> Eliminar</button></td>
+                    </tr>`; // Added icon to button
           });
           html += "</tbody></table>";
           tablaEmpleados.innerHTML = html;
@@ -218,29 +285,27 @@
           console.error("Error loading employees:", error);
           tablaEmpleados.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar los empleados: ${escapeHtml(error.message)}</div>`;
       }
-    } // End of cargarEmpleados
+    }
 
     async function cargarProyectos() {
-      tablaProyectos.innerHTML = 'Cargando proyectos...';
+      tablaProyectos.innerHTML = '<div class="text-center p-3"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
-          const res = await fetch('/proyectos'); // Fetch from admin endpoint
+          const res = await fetch('/proyectos');
           if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
           const data = await res.json();
-
           if (data.error) { throw new Error(data.error); }
           if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
           if (data.length === 0) {
-              tablaProyectos.innerHTML = '<p class="text-muted text-center">No hay proyectos registrados.</p>';
+              tablaProyectos.innerHTML = '<p class="text-muted text-center p-3">No hay proyectos registrados.</p>';
               return;
           }
-
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
           data.forEach(p => {
             const nombre = p.nombre || '';
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')">Eliminar</button></td>
-                    </tr>`;
+                      <td><button class='btn btn-sm btn-outline-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')"><i class="bi bi-trash3"></i> Eliminar</button></td>
+                    </tr>`; // Added icon to button
           });
           html += "</tbody></table>";
           tablaProyectos.innerHTML = html;
@@ -248,8 +313,7 @@
           console.error("Error loading projects:", error);
           tablaProyectos.innerHTML = `<div class="alert alert-danger" role="alert">Error al cargar los proyectos: ${escapeHtml(error.message)}</div>`;
       }
-    } // End of cargarProyectos
-
+    }
 
     // --- Unified Delete Logic ---
     function confirmDeleteItem(buttonElement, itemType) {
@@ -258,20 +322,15 @@
             console.error("Could not determine item name for deletion.");
             return;
         }
-
-        itemNameToDeleteSpan.textContent = itemName; // Update modal text with item name
-
-        // Set the specific delete function to call when modal confirm is clicked
+        itemNameToDeleteSpan.textContent = itemName;
         if (itemType === 'employee') {
             deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
         } else if (itemType === 'project') {
             deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
         } else {
             console.error("Unknown item type for deletion:", itemType);
-            return; // Don't show modal if type is unknown
+            return;
         }
-
-        // Show the modal if it's initialized
         if (deleteConfirmModal) {
             deleteConfirmModal.show();
         } else {
@@ -281,221 +340,133 @@
 
     async function performDelete(endpoint, name, refreshFunction) {
         if (!name || !endpoint || !refreshFunction) return;
-
         clearAdminAlert();
+        // Optional: Add loading state to modal button
+        const deleteBtn = document.getElementById('confirmDeleteBtn');
+        if(deleteBtn) deleteBtn.disabled = true;
+
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: name }) // Assumes backend expects { "nombre": "..." }
+                body: JSON.stringify({ nombre: name })
             });
             const result = await response.json();
-
             if (response.ok && result.status === 'success') {
                 showAdminAlert(`${name} eliminado correctamente.`, 'success');
-                refreshFunction(); // Refresh the relevant list (employees or projects)
+                refreshFunction();
             } else {
-                // Throw error using message from backend or default
                 throw new Error(result.message || 'Error desconocido al eliminar');
             }
         } catch (error) {
             console.error(`Error deleting ${name} from ${endpoint}:`, error);
             showAdminAlert(`Error al eliminar ${name}: ${escapeHtml(error.message)}`, 'danger');
         } finally {
-             // Hide modal regardless of outcome
-             if (deleteConfirmModal) {
-                deleteConfirmModal.hide();
-             }
-            deleteAction = null; // Reset stored action
+             if (deleteConfirmModal) deleteConfirmModal.hide();
+             if(deleteBtn) deleteBtn.disabled = false; // Re-enable button
+            deleteAction = null;
         }
     }
 
-
     // --- Unified Form Submission Handling ---
     async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
         clearAdminAlert();
-
         const form = event.target;
         const formData = new FormData(form);
         let isValid = true;
-        let formType = '';
+        let formType = form.id === 'add-employee-form' ? 'employee' : (form.id === 'add-project-form' ? 'project' : '');
 
-        // Determine form type for specific validation
-        if (form.id === 'add-employee-form') {
-            formType = 'employee';
-        } else if (form.id === 'add-project-form') {
-            formType = 'project';
-        }
-
-        // Basic client-side validation
         for (let [key, value] of formData.entries()) {
-           // Check required fields based on form type
-           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !value) ||
-               (formType === 'project' && key === 'nombre_proyecto' && !value)) {
-                 isValid = false;
-                 break;
+           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !value.trim()) ||
+               (formType === 'project' && key === 'nombre_proyecto' && !value.trim())) {
+                 isValid = false; break;
             }
-           // Specific PIN validation for employee form
-           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(value)) {
-                showAdminAlert('PIN debe ser numérico.', 'warning');
-                return; // Stop submission if PIN is invalid
+           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(value.trim())) {
+                showAdminAlert('PIN debe ser numérico.', 'warning'); return;
            }
         }
-
         if (!isValid) {
-             showAdminAlert('Por favor, completa todos los campos requeridos.', 'warning');
-             return; // Stop submission if required fields are missing
+             showAdminAlert('Por favor, completa todos los campos requeridos.', 'warning'); return;
         }
-
-        // Disable submit button during request
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
 
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                body: formData
-            });
-
-            // Check if redirect indicates success OR if error message is returned
+            const response = await fetch(endpoint, { method: 'POST', body: formData });
             if (response.ok && response.redirected) {
-                const redirectedUrl = new URL(response.url); // Get URL after redirect
+                const redirectedUrl = new URL(response.url);
                 const successParam = redirectedUrl.searchParams.get('success');
                 const errorParam = redirectedUrl.searchParams.get('error');
-
-                if (errorParam) {
-                    throw new Error(errorParam); // If backend redirected with error
-                }
-
-                 showAdminAlert(successParam || successMessage, 'success');
-                 form.reset(); // Clear the form
-                 refreshFunction(); // Refresh list
-
-                 // Navigate to the relevant tab based on the hash in the redirected URL
-                 if (redirectedUrl.hash) {
-                    handleUrlHash(redirectedUrl.hash); // Pass hash directly
-                 }
-
+                if (errorParam) throw new Error(errorParam);
+                showAdminAlert(successParam || successMessage, 'success');
+                form.reset();
+                refreshFunction();
+                if (redirectedUrl.hash) handleUrlHash(redirectedUrl.hash);
             } else if (!response.ok) {
-                 // Handle errors returned directly (non-redirect)
-                 const errorText = await response.text(); // Try reading direct error text
+                 const errorText = await response.text();
                  throw new Error(errorText || `Error ${response.status}`);
-            } else {
-                 // Handle non-redirect OK response (less likely with current backend setup)
-                 showAdminAlert(successMessage, 'success');
-                 form.reset();
-                 refreshFunction();
+            } else { // Non-redirect OK (less likely)
+                 showAdminAlert(successMessage, 'success'); form.reset(); refreshFunction();
             }
         } catch (error) {
              console.error("Error submitting form:", error);
              showAdminAlert(`Error: ${escapeHtml(error.message)}`, 'danger');
         } finally {
-            // Re-enable submit button
              if (submitButton) submitButton.disabled = false;
         }
     }
 
-    // --- Utility Function ---
-    function escapeHtml(unsafe) {
-       if (typeof unsafe !== 'string') return '';
-       return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
     // --- URL Hash Handling ---
-    function handleUrlHash(hashValue = window.location.hash) { // Accept optional hash
+    function handleUrlHash(hashValue = window.location.hash) {
         const hash = hashValue;
         if (hash) {
-            // Find the button that targets this hash
             const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
             if (tabButton) {
-                // Use Bootstrap's Tab API to show the tab
                 try {
                    const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
-                   if (tab && !tabButton.classList.contains('active')) { // Avoid redundant showing
-                        tab.show();
-                   }
-                } catch (e) {
-                    console.warn("Bootstrap Tab component error:", e);
-                }
+                   if (tab && !tabButton.classList.contains('active')) tab.show();
+                } catch (e) { console.warn("Bootstrap Tab component error:", e); }
             }
         }
      }
 
-
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize the modal instance only once
         try {
             const modalElement = document.getElementById('deleteConfirmModal');
-            if (modalElement) {
-                deleteConfirmModal = new bootstrap.Modal(modalElement);
-            } else {
-                 console.error("Delete confirmation modal element not found.");
-            }
-        } catch(e) {
-             console.error("Failed to initialize Bootstrap modal:", e);
-        }
+            if (modalElement) deleteConfirmModal = new bootstrap.Modal(modalElement);
+            else console.error("Delete confirmation modal element not found.");
+        } catch(e) { console.error("Failed to initialize Bootstrap modal:", e); }
 
-
-        // Attach the generic delete action trigger to the modal's confirm button
         if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', () => {
-                if (typeof deleteAction === 'function') {
-                    deleteAction(); // Execute the stored delete function
-                } else {
-                     console.error("No delete action specified for modal confirmation.");
-                }
-            });
-        } else {
-             console.error("Confirm delete button not found.");
-        }
+            confirmDeleteBtn.addEventListener('click', () => { if (typeof deleteAction === 'function') deleteAction(); });
+        } else { console.error("Confirm delete button not found."); }
 
-        // Attach form handlers
         const addEmployeeForm = document.getElementById('add-employee-form');
         const addProjectForm = document.getElementById('add-project-form');
+        if (addEmployeeForm) addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
+        if (addProjectForm) addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
 
-        if (addEmployeeForm) {
-            addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-        }
-        if (addProjectForm) {
-            addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
-        }
-
-        // Initial data loads
         cargarHistorial();
         cargarEmpleados();
         cargarProyectos();
 
-        // Handle success/error messages potentially passed in URL query string after redirects
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
-        const currentHash = window.location.hash; // Preserve hash
-
+        const currentHash = window.location.hash;
         if (successMsg) {
             showAdminAlert(successMsg, 'success');
-            // Clean the query string from URL, keeping the hash
             window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         } else if (errorMsg) {
              showAdminAlert(errorMsg, 'danger');
-              window.history.replaceState({}, document.title, window.location.pathname + currentHash);
+             window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         }
 
-        // Activate tab based on URL hash (e.g., after redirect)
-        handleUrlHash(); // Check hash on initial load
-        // Update tab if hash changes (e.g., manual tab click updates URL)
+        handleUrlHash();
         window.addEventListener('hashchange', () => handleUrlHash(), false);
-
-        // Re-check hash activation after a short delay to ensure JS/Bootstrap is fully ready
-        if (currentHash) {
-           setTimeout(() => handleUrlHash(currentHash), 150);
-        }
+        if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
     });
 
   </script>
