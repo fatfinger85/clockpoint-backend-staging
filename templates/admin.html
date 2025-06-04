@@ -732,13 +732,22 @@
           return;
         }
         let html =
-          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
         data.forEach((e) => {
           const nombre = e.nombre || "";
           const pin = e.pin || "";
           html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          data-name="${escapeHtml(nombre)}"
+                          onclick="confirmDeleteItem(this, 'employee')"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
                     </tr>`;
         });
         html += "</tbody></table>";
@@ -771,11 +780,20 @@
           return;
         }
         let html =
-          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
         data.forEach((p) => {
           const nombre = p.nombre || "";
           html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          data-name="${escapeHtml(nombre)}"
+                          onclick="confirmDeleteItem(this, 'project')"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
                     </tr>`;
         });
         html += "</tbody></table>";
@@ -790,16 +808,8 @@
 
     // === LÓGICA DE ELIMINACIÓN (modal) ===
     function confirmDeleteItem(buttonElement, itemType) {
-      console.log(`confirmDeleteItem called for type: ${itemType}`);
       const itemName = buttonElement.getAttribute("data-name");
       if (!itemNameToDeleteSpan || !deleteConfirmModal) {
-        console.error(
-          "Modal elements not found or modal not initialized."
-        );
-        return;
-      }
-      if (!itemName) {
-        console.error("Item name not found.");
         return;
       }
       itemNameToDeleteSpan.textContent = itemName;
@@ -810,13 +820,11 @@
         deleteAction = () =>
           performDelete("/eliminar-proyecto", itemName, cargarProyectos);
       } else {
-        console.error("Unknown item type:", itemType);
         return;
       }
       deleteConfirmModal.show();
     }
     async function performDelete(endpoint, name, refreshFunction) {
-      console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
       if (!name || !endpoint || !refreshFunction) return;
       clearAdminAlert();
       const deleteBtn = document.getElementById("confirmDeleteBtn");
@@ -835,7 +843,6 @@
           throw new Error(result.message || `Error ${response.status}`);
         }
       } catch (error) {
-        console.error(`Error deleting ${name}:`, error);
         showAdminAlert(
           `Error al eliminar ${name}: ${escapeHtml(error.message)}`,
           "danger"
@@ -917,7 +924,6 @@
           refreshFunction();
         }
       } catch (error) {
-        console.error("Error submitting form:", error);
         showAdminAlert(`Error: ${escapeHtml(error.message)}`, "danger");
       } finally {
         if (submitButton) submitButton.disabled = false;
@@ -930,12 +936,8 @@
       if (hash) {
         const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
         if (tabButton) {
-          try {
-            const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
-            if (tab && !tabButton.classList.contains("active")) tab.show();
-          } catch (e) {
-            console.warn("Bootstrap Tab component error:", e);
-          }
+          const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+          if (tab && !tabButton.classList.contains("active")) tab.show();
         }
       }
     }
@@ -946,27 +948,17 @@
       document.querySelector(".container-admin").classList.add("show");
 
       // Inicializar el modal (en caso de que se use)
-      try {
-        const modalElement = document.getElementById("deleteConfirmModal");
-        if (modalElement) {
-          deleteConfirmModal = new bootstrap.Modal(modalElement);
-        } else {
-          console.error("Modal para eliminación no encontrado en el DOM.");
-        }
+      const modalElement = document.getElementById("deleteConfirmModal");
+      if (modalElement) {
+        deleteConfirmModal = new bootstrap.Modal(modalElement);
+      }
 
-        if (confirmDeleteBtn) {
-          confirmDeleteBtn.addEventListener("click", () => {
-            if (typeof deleteAction === "function") {
-              deleteAction();
-            } else {
-              console.error("No se especificó acción de eliminación.");
-            }
-          });
-        } else {
-          console.error("Botón de confirmar eliminación no encontrado.");
-        }
-      } catch (e) {
-        console.error("Error al inicializar el modal:", e);
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", () => {
+          if (typeof deleteAction === "function") {
+            deleteAction();
+          }
+        });
       }
 
       // Vincular envío de formularios
