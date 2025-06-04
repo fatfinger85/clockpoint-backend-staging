@@ -3,7 +3,7 @@
 from flask import Flask, request, jsonify, redirect, render_template, session, send_file
 from flask_cors import CORS
 from supabase import create_client, Client
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from collections import defaultdict  # <-- Añadido para totales
 import pandas as pd
@@ -620,8 +620,16 @@ def horas_totales_semanal():
         resultados = []
         for (nombre, year, week), segs in total_por_usuario_semana.items():
             horas = round(segs / 3600, 2)
-            # Formateamos “YYYY-Wxx” para mostrar en el reporte
-            semana_str = f"{year}-W{week:02d}"
+            # --- Cálculo del rango “Jun 2–8, 2025” ---
+            lunes = datetime.fromisocalendar(year, week, 1)
+            domingo = lunes + timedelta(days=6)
+            mes_abrev = lunes.strftime("%b")      # ej. "Jun"
+            dia_inicio = lunes.day                # ej. 2
+            dia_fin = domingo.day                 # ej. 8
+            anio = lunes.year                     # ej. 2025
+
+            semana_str = f"Semana {week} ({mes_abrev} {dia_inicio}–{dia_fin}, {anio})"
+
             resultados.append({
                 "nombre": nombre,
                 "semana": semana_str,
