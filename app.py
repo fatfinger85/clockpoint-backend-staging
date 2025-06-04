@@ -391,6 +391,9 @@ def exportar():
 
 # -- NUEVOS ENDPOINTS PARA HORAS TOTALES --
 
+from datetime import datetime
+from collections import defaultdict
+
 @app.route("/horas-totales/<nombre_usuario>", methods=["GET"])
 def horas_totales_usuario(nombre_usuario):
     if not session.get("admin"):
@@ -399,48 +402,57 @@ def horas_totales_usuario(nombre_usuario):
         return jsonify({"status": "error", "message": "DB no configurada"}), 500
 
     try:
-        # 1) Traer todos los registros de este usuario, ordenados por fecha y hora
+        # 1) Traer todos los registros de este usuario, usando timestamp completo
         registros = (
             supabase.table("registros")
-            .select("accion, fecha, hora")
+            .select("accion, timestamp")
             .eq("nombre", nombre_usuario)
-            .order("fecha", desc=False)
-            .order("hora", desc=False)
+            .order("timestamp", desc=False)
             .execute()
             .data
         )
+
+        if not isinstance(registros, list):
+            logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
+            return jsonify({"status": "error", "message": "Formato inesperado de datos"}), 500
 
         total_segundos = 0
         pendiente_entrada = None
 
         # 2) Recorrer cada registro en orden cronológico
-        for row in registros:
-            accion = (row.get("accion") or "").lower()
-            dt = datetime.strptime(f"{row['fecha']} {row['hora']}", "%Y-%m-%d %H:%M:%S")
+        for idx, row in enumerate(registros):
+            accion = (row.get("accion") or "").strip().lower()
+            ts = row.get("timestamp")
+            if not ts:
+                logging.warning(f"Fila #{idx} ignorada por timestamp vacío: {row!r}")
+                continue
+
+            # Intentamos parsear el timestamp (espera formato "YYYY-MM-DD HH:MM:SS")
+            try:
+                dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except Exception as parse_err:
+                logging.warning(f"Fila #{idx} con timestamp inválido '{ts}': {parse_err}. Fila: {row!r}")
+                continue
 
             if accion == "clock in":
-                # Si no hay una entrada pendiente, la usamos
                 if pendiente_entrada is None:
                     pendiente_entrada = dt
-                # Si ya existía una entrada pendiente, la ignoramos (tomar la más temprana)
             elif accion == "clock out":
                 if pendiente_entrada is not None:
                     delta = dt - pendiente_entrada
                     total_segundos += delta.total_seconds()
-                    pendiente_entrada = None  # reset para el siguiente par
+                    pendiente_entrada = None
 
-        # 3) Convertir segundos a horas (2 decimales)
         total_horas = round(total_segundos / 3600, 2)
+        return jsonify({
+            "status": "success",
+            "nombre": nombre_usuario,
+            "horas_trabajadas": total_horas
+        })
 
-        return jsonify(
-            {
-                "status": "success",
-                "nombre": nombre_usuario,
-                "horas_trabajadas": total_horas,
-            }
-        )
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logging.error(f"Error en /horas-totales/{nombre_usuario}: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": "Error interno al calcular totales"}), 500
 
 
 @app.route("/horas-totales", methods=["GET"])
@@ -451,45 +463,59 @@ def horas_totales_todos():
         return jsonify({"status": "error", "message": "DB no configurada"}), 500
 
     try:
-        # 1) Traer todos los registros de todos los usuarios, ordenados por nombre, fecha y hora
+        # 1) Traer todos los registros de todos los usuarios, ordenados por timestamp
         registros = (
             supabase.table("registros")
-            .select("nombre, accion, fecha, hora")
-            .order("nombre", desc=False)
-            .order("fecha", desc=False)
-            .order("hora", desc=False)
+            .select("nombre, accion, timestamp")
+            .order("timestamp", desc=False)
             .execute()
             .data
         )
 
-        total_por_usuario = defaultdict(float)
-        pendiente_entrada = dict()  # clave: nombre_usuario, valor: datetime de entrada pendiente
+        if not isinstance(registros, list):
+            logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
+            return jsonify({"status": "error", "message": "Formato inesperado de datos"}), 500
 
-        # 2) Recorrer cada registro en orden (agrupado por nombre, fecha y hora)
-        for row in registros:
+        total_por_usuario = defaultdict(float)
+        pendiente_entrada = dict()  # { nombre_usuario: datetime de la última entrada pendiente }
+
+        # 2) Recorrer cada registro en orden cronológico global
+        for idx, row in enumerate(registros):
             nombre = row.get("nombre")
-            accion = (row.get("accion") or "").lower()
-            dt = datetime.strptime(f"{row['fecha']} {row['hora']}", "%Y-%m-%d %H:%M:%S")
+            accion = (row.get("accion") or "").strip().lower()
+            ts = row.get("timestamp")
+            if not ts:
+                logging.warning(f"Fila #{idx} ignorada por timestamp vacío: {row!r}")
+                continue
+
+            try:
+                dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except Exception as parse_err:
+                logging.warning(f"Fila #{idx} con timestamp inválido '{ts}': {parse_err}. Fila: {row!r}")
+                continue
 
             if accion == "clock in":
                 if pendiente_entrada.get(nombre) is None:
                     pendiente_entrada[nombre] = dt
-                # Si ya existe un clock in pendiente para ese usuario, lo ignoramos
             elif accion == "clock out":
-                if pendiente_entrada.get(nombre) is not None:
-                    delta = dt - pendiente_entrada[nombre]
+                inicio = pendiente_entrada.get(nombre)
+                if inicio is not None:
+                    delta = dt - inicio
                     total_por_usuario[nombre] += delta.total_seconds()
                     pendiente_entrada[nombre] = None
 
-        # 3) Convertir totales de segundos a horas (2 decimales) y armar lista de resultados
+        # 3) Convertir acumulados de segundos a horas y armar el JSON de respuesta
         resultados = []
         for nombre, segs in total_por_usuario.items():
             horas = round(segs / 3600, 2)
             resultados.append({"nombre": nombre, "horas_trabajadas": horas})
 
         return jsonify({"status": "success", "totales": resultados})
+
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logging.error(f"Error en /horas-totales: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": "Error interno al calcular totales"}), 500
+
 
 
 # Health check endpoint (optional but good practice)
