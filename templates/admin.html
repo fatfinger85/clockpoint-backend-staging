@@ -499,7 +499,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMACIÓN (para futuros delete) -->
+  <!-- MODAL DE CONFIRMACIÓN (para eliminar) -->
   <div
     class="modal fade"
     id="deleteConfirmModal"
@@ -591,7 +591,7 @@
       tablaHistorial.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
-        const res = await fetch("/registros");
+        const res = await fetch("/registros", { credentials: "include" });
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -634,7 +634,7 @@
       tablaTotales.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...</div>';
       try {
-        const res = await fetch("/horas-totales");
+        const res = await fetch("/horas-totales", { credentials: "include" });
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.status !== "success") {
@@ -674,7 +674,7 @@
       tablaTotalesSemanal.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales semanales...</div>';
       try {
-        const res = await fetch("/horas-totales-semanal");
+        const res = await fetch("/horas-totales-semanal", { credentials: "include" });
         if (!res.ok)
           throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
@@ -717,7 +717,7 @@
       tablaEmpleados.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
-        const res = await fetch("/empleados");
+        const res = await fetch("/empleados", { credentials: "include" });
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -765,7 +765,7 @@
       tablaProyectos.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
-        const res = await fetch("/proyectos");
+        const res = await fetch("/proyectos", { credentials: "include" });
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -809,9 +809,6 @@
     // === LÓGICA DE ELIMINACIÓN (modal) ===
     function confirmDeleteItem(buttonElement, itemType) {
       const itemName = buttonElement.getAttribute("data-name");
-      if (!itemNameToDeleteSpan || !deleteConfirmModal) {
-        return;
-      }
       itemNameToDeleteSpan.textContent = itemName;
       if (itemType === "employee") {
         deleteAction = () =>
@@ -820,7 +817,7 @@
         deleteAction = () =>
           performDelete("/eliminar-proyecto", itemName, cargarProyectos);
       } else {
-        return;
+        deleteAction = null;
       }
       deleteConfirmModal.show();
     }
@@ -829,13 +826,16 @@
       clearAdminAlert();
       const deleteBtn = document.getElementById("confirmDeleteBtn");
       if (deleteBtn) deleteBtn.disabled = true;
+
       try {
         const response = await fetch(endpoint, {
           method: "POST",
+          credentials: "include",               // ← Incluir cookies para mantener sesión
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ nombre: name }),
         });
         const result = await response.json();
+
         if (response.ok && result.status === "success") {
           showAdminAlert(`${name} eliminado correctamente.`, "success");
           refreshFunction();
@@ -903,7 +903,11 @@
       if (submitButton) submitButton.disabled = true;
 
       try {
-        const response = await fetch(endpoint, { method: "POST", body: formData });
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "include",           // ← También incluir cookies al agregar
+          body: formData
+        });
         if (response.ok && response.redirected) {
           const redirectedUrl = new URL(response.url);
           const successParam = redirectedUrl.searchParams.get("success");
