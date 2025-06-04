@@ -125,95 +125,127 @@
     </style>
 </head>
 <body>
-  <div class="container py-4"> <div class="card main-card">
+  <div class="container py-4">
+    <div class="card main-card">
       <div class="card-header text-center">
-         <h2 class="mb-0 text-primary">Panel de Administración</h2>
+        <h2 class="mb-0 text-primary">Panel de Administración</h2>
       </div>
       <div class="card-body">
 
-          <div id="admin-alert-placeholder"></div>
+        <div id="admin-alert-placeholder"></div>
 
-          <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab"><i class="bi bi-clock-history"></i> Historial</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab"><i class="bi bi-person-plus-fill"></i> Agregar Empleado</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab"><i class="bi bi-people-fill"></i> Gestionar Empleados</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab"><i class="bi bi-folder-fill"></i> Proyectos</button>
-            </li>
-            <li class="nav-item ms-auto">
-              <a class="nav-link text-success" href="/exportar" target="_blank"><i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar CSV</a>
-            </li>
-          </ul>
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab">
+              <i class="bi bi-clock-history"></i> Historial
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">
+              <i class="bi bi-person-plus-fill"></i> Agregar Empleado
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">
+              <i class="bi bi-people-fill"></i> Gestionar Empleados
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab">
+              <i class="bi bi-folder-fill"></i> Proyectos
+            </button>
+          </li>
+          <li class="nav-item ms-auto">
+            <a class="nav-link text-success" href="/exportar" target="_blank">
+              <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar CSV
+            </a>
+          </li>
+        </ul>
 
-          <div class="tab-content pt-3" id="adminTabsContent"> <div class="tab-pane fade show active" id="historial" role="tabpanel" aria-labelledby="historial-tab">
-               <h4 class="mb-3">Historial de Registros</h4>
-               <div class="table-responsive" id="tablaHistorial">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...
-                   </div>
-               </div>
-            </div>
-
-            <div class="tab-pane fade" id="empleados" role="tabpanel" aria-labelledby="empleados-tab">
-              <div class="form-section">
-                 <h5 class="mb-3">Agregar Nuevo Empleado</h5>
-                 <form id="add-employee-form" action="/agregar-empleado" method="POST" class="row g-3 needs-validation" novalidate>
-                    <div class="col-md-5">
-                      <label for="add-emp-nombre" class="form-label">Nombre Empleado</label>
-                      <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre completo" required class="form-control">
-                      <div class="invalid-feedback">Por favor ingresa un nombre.</div>
-                    </div>
-                    <div class="col-md-5">
-                      <label for="add-emp-pin" class="form-label">PIN</label>
-                      <input type="text" id="add-emp-pin" name="pin" pattern="\d+" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control">
-                      <div class="invalid-feedback">Por favor ingresa un PIN numérico.</div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                      <button type="submit" class="btn btn-primary w-100">Agregar</button>
-                    </div>
-                 </form>
+        <div class="tab-content pt-3" id="adminTabsContent">
+          <!-- ======= PESTAÑA: HISTORIAL ======= -->
+          <div class="tab-pane fade show active" id="historial" role="tabpanel" aria-labelledby="historial-tab">
+            <h4 class="mb-3">Historial de Registros</h4>
+            <div class="table-responsive" id="tablaHistorial">
+              <div class="loading-indicator">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...
               </div>
             </div>
 
-             <div class="tab-pane fade" id="gestion" role="tabpanel" aria-labelledby="gestion-tab">
-               <h4 class="mb-3">Lista de Empleados</h4> <div class="table-responsive" id="tablaEmpleados">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...
-                   </div>
-               </div>
-            </div>
-
-
-            <div class="tab-pane fade" id="proyectos" role="tabpanel" aria-labelledby="proyectos-tab">
-              <div class="form-section">
-                 <h5 class="mb-3">Agregar Nuevo Proyecto</h5>
-                 <form id="add-project-form" action="/agregar-proyecto" method="POST" class="row g-3 needs-validation" novalidate>
-                    <div class="col-md-10">
-                       <label for="add-proj-nombre" class="form-label">Nombre Proyecto</label>
-                       <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del proyecto" required class="form-control">
-                       <div class="invalid-feedback">Por favor ingresa un nombre de proyecto.</div>
-                    </div>
-                     <div class="col-md-2 d-flex align-items-end">
-                       <button type="submit" class="btn btn-primary w-100">Agregar</button>
-                    </div>
-                 </form>
-              </div>
-              <h5 class="mt-4 mb-3">Lista de Proyectos</h5> <div class="table-responsive" id="tablaProyectos">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...
-                   </div>
+            <!-- NUEVA SECCIÓN: TOTALES DE HORAS TRABAJADAS -->
+            <h4 class="mt-4 mb-3">Totales de Horas Trabajadas</h4>
+            <div class="table-responsive" id="tablaTotales">
+              <div class="loading-indicator">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...
               </div>
             </div>
+          </div>
 
-          </div> </div> </div> </div>
+          <!-- ======= PESTAÑA: AGREGAR EMPLEADO ======= -->
+          <div class="tab-pane fade" id="empleados" role="tabpanel" aria-labelledby="empleados-tab">
+            <div class="form-section">
+              <h5 class="mb-3">Agregar Nuevo Empleado</h5>
+              <form id="add-employee-form" action="/agregar-empleado" method="POST" class="row g-3 needs-validation" novalidate>
+                <div class="col-md-5">
+                  <label for="add-emp-nombre" class="form-label">Nombre Empleado</label>
+                  <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre completo" required class="form-control">
+                  <div class="invalid-feedback">Por favor ingresa un nombre.</div>
+                </div>
+                <div class="col-md-5">
+                  <label for="add-emp-pin" class="form-label">PIN</label>
+                  <input type="text" id="add-emp-pin" name="pin" pattern="\d+" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control">
+                  <div class="invalid-feedback">Por favor ingresa un PIN numérico.</div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- ======= PESTAÑA: GESTIÓN DE EMPLEADOS ======= -->
+          <div class="tab-pane fade" id="gestion" role="tabpanel" aria-labelledby="gestion-tab">
+            <h4 class="mb-3">Lista de Empleados</h4>
+            <div class="table-responsive" id="tablaEmpleados">
+              <div class="loading-indicator">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...
+              </div>
+            </div>
+          </div>
+
+          <!-- ======= PESTAÑA: PROYECTOS ======= -->
+          <div class="tab-pane fade" id="proyectos" role="tabpanel" aria-labelledby="proyectos-tab">
+            <div class="form-section">
+              <h5 class="mb-3">Agregar Nuevo Proyecto</h5>
+              <form id="add-project-form" action="/agregar-proyecto" method="POST" class="row g-3 needs-validation" novalidate>
+                <div class="col-md-10">
+                  <label for="add-proj-nombre" class="form-label">Nombre Proyecto</label>
+                  <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del proyecto" required class="form-control">
+                  <div class="invalid-feedback">Por favor ingresa un nombre de proyecto.</div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                </div>
+              </form>
+            </div>
+            <h5 class="mt-4 mb-3">Lista de Proyectos</h5>
+            <div class="table-responsive" id="tablaProyectos">
+              <div class="loading-indicator">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...
+              </div>
+            </div>
+          </div>
+        </div> <!-- /.tab-content -->
+
+      </div> <!-- /.card-body -->
+    </div> <!-- /.card -->
+  </div> <!-- /.container -->
+
+  <!-- MODAL DE CONFIRMACIÓN (permitir borrar si se implementa en futuro) -->
   <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
           <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -222,15 +254,18 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button> </div>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
+        </div>
       </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     // --- DOM Element References ---
     const tablaHistorial = document.getElementById("tablaHistorial");
+    const tablaTotales = document.getElementById("tablaTotales"); // NUEVO: div para totales
     const tablaEmpleados = document.getElementById("tablaEmpleados");
     const tablaProyectos = document.getElementById("tablaProyectos");
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
@@ -268,6 +303,8 @@
     }
 
     // --- Data Loading Functions ---
+
+    // 1) Cargar Historial (ya existente)
     async function cargarHistorial() {
       tablaHistorial.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
@@ -277,7 +314,8 @@
           if (data.error) { throw new Error(data.error); }
           if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
           if (data.length === 0) {
-              tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>'; return;
+              tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>';
+              return;
           }
           let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>";
           data.forEach(r => {
@@ -297,6 +335,36 @@
       } catch (error) {
           console.error("Error loading history:", error);
           tablaHistorial.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    // 2) Cargar Totales de Horas Trabajadas (NUEVO)
+    async function cargarTotales() {
+      tablaTotales.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...</div>';
+      try {
+          const res = await fetch('/horas-totales');
+          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+          const data = await res.json();
+          if (data.status !== 'success') { throw new Error(data.message || "Error en formato de respuesta."); }
+          const totales = data.totales;
+          if (!Array.isArray(totales) || totales.length === 0) {
+              tablaTotales.innerHTML = '<p class="text-muted text-center p-3">No hay datos de totales.</p>';
+              return;
+          }
+          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Horas Trabajadas</th></tr></thead><tbody>";
+          totales.forEach(item => {
+            const nombre = item.nombre || '';
+            const horas = (item.horas_trabajadas !== undefined) ? item.horas_trabajadas : '';
+            html += `<tr>
+                        <td>${escapeHtml(nombre)}</td>
+                        <td>${escapeHtml(horas.toString())}</td>
+                     </tr>`;
+          });
+          html += "</tbody></table>";
+          tablaTotales.innerHTML = html;
+      } catch (error) {
+          console.error("Error loading totals:", error);
+          tablaTotales.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar totales: ${escapeHtml(error.message)}</div>`;
       }
     }
 
@@ -464,7 +532,6 @@
         }
     }
 
-
     // --- URL Hash Handling ---
      function handleUrlHash(hashValue = window.location.hash) {
         const hash = hashValue;
@@ -505,8 +572,9 @@
 
         // Initial Data Loads
         cargarHistorial();
-        cargarEmpleados(); // Will load employees without delete button
-        cargarProyectos(); // Will load projects without delete button
+        cargarTotales();    // <--- Carga totales de horas al iniciar
+        cargarEmpleados();  // Will load employees without delete button
+        cargarProyectos();  // Will load projects without delete button
 
         // Handle URL Params/Hash
         const urlParams = new URLSearchParams(window.location.search);
