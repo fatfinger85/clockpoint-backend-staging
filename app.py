@@ -1,11 +1,13 @@
 
 # filename: app.py
-from flask import Flask, request, jsonify, redirect, render_template, session
+from flask import Flask, request, jsonify, redirect, render_template, session, send_file
 from flask_cors import CORS
 from supabase import create_client, Client
 from datetime import datetime
 from pytz import timezone
 from collections import defaultdict  # <-- Añadido para totales
+import pandas as pd
+from io import BytesIO
 import os
 import logging  # Added for potential logging later
 
@@ -350,43 +352,87 @@ def exportar():
         return "Backend database not configured.", 500
 
     try:
-        # Select all columnas: nombre, accion, fecha, hora, proyecto
-        data = (
+        # 1) Leer todos los registros desde Supabase
+        registros = (
             supabase.table("registros")
-            .select("nombre, accion, fecha, hora, proyecto")
-            .order("fecha", desc=True)
-            .order("hora", desc=True)
+            .select("nombre, accion, timestamp, proyecto")
+            .order("timestamp", desc=False)
             .execute()
             .data
         )
-        if not data:
-            return "No hay registros para exportar.", 200
+        if not isinstance(registros, list):
+            logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
+            return "Error al generar archivo: formato inesperado de datos.", 500
 
-        # Cabecera CSV con fecha y hora (sin timestamp)
-        csv_lines = ["nombre,accion,fecha,hora,proyecto"]
-        for row in data:
-            nombre = (row.get("nombre") or "").replace('"', '""')
-            accion = (row.get("accion") or "").replace('"', '""')
-            fecha = (row.get("fecha") or "").replace('"', '""')
-            hora = (row.get("hora") or "").replace('"', '""')
-            proyecto = (row.get("proyecto") or "").replace('"', '""')
+        # 2) Convertir la lista de dicts a DataFrame de pandas
+        df = pd.DataFrame(registros)
 
-            csv_lines.append(f'"{nombre}","{accion}","{fecha}","{hora}","{proyecto}"')
+        # Asegurarnos de que exista la columna 'timestamp'
+        if "timestamp" not in df.columns:
+            return "Error: la columna 'timestamp' no existe en la tabla registros.", 500
 
-        csv_output = "\n".join(csv_lines) + "\n"
+        # Convertir timestamp a datetime y extraer fecha/hora
+        df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S", errors="coerce")
+        df["fecha"] = df["timestamp"].dt.strftime("%Y-%m-%d")
+        df["hora"]  = df["timestamp"].dt.strftime("%H:%M:%S")
 
-        logging.info("Generated CSV export including fecha y hora, y proyecto.")
-        return (
-            csv_output,
-            200,
-            {
-                "Content-Type": "text/csv; charset=utf-8",
-                "Content-Disposition": f"attachment;filename=registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            },
+        # Rellenar valores faltantes si hubiera timestamp inválido
+        df["fecha"] = df["fecha"].fillna("")
+        df["hora"]  = df["hora"].fillna("")
+
+        # 3) Calcular totales de horas trabajadas por empleado
+        total_por_usuario = defaultdict(float)
+        pendiente_entrada = {}  # { nombre: datetime de última entrada pendiente }
+
+        # Iterar por cada fila ordenada por timestamp ascendente
+        for _, row in df.iterrows():
+            nombre = row["nombre"]
+            accion = (row["accion"] or "").strip().lower()
+            ts     = row["timestamp"]
+            if pd.isna(ts):
+                # timestamp inválido o faltante: lo ignoramos
+                continue
+
+            if accion == "clock in":
+                if pendiente_entrada.get(nombre) is None:
+                    pendiente_entrada[nombre] = ts
+            elif accion == "clock out":
+                inicio = pendiente_entrada.get(nombre)
+                if inicio is not None:
+                    total_por_usuario[nombre] += (ts - inicio).total_seconds()
+                    pendiente_entrada[nombre] = None
+
+        # Convertir segundos a horas con 2 decimales
+        totales_list = []
+        for nombre, segs in total_por_usuario.items():
+            horas = round(segs / 3600, 2)
+            totales_list.append({"nombre": nombre, "horas_trabajadas": horas})
+        df_totales = pd.DataFrame(totales_list)
+
+        # 4) Preparar un Excel en memoria con dos hojas
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            # Hoja “Registros”: todas las columnas que queremos mostrar
+            df_reg = df[["nombre", "accion", "fecha", "hora", "proyecto"]].copy()
+            df_reg.to_excel(writer, sheet_name="Registros", index=False)
+
+            # Hoja “Totales”: nombre + horas_trabajadas
+            df_totales.to_excel(writer, sheet_name="Totales", index=False)
+
+        output.seek(0)
+
+        # 5) Devolver el archivo .xlsx como descarga
+        filename = f"registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=filename,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
     except Exception as e:
-        logging.error(f"Error exporting records: {str(e)}")
-        return "Error al generar el archivo CSV.", 500
+        logging.error(f"Error exporting Excel: {e}", exc_info=True)
+        return "Error al generar el archivo Excel.", 500
 
 
 # -- NUEVOS ENDPOINTS PARA HORAS TOTALES --
